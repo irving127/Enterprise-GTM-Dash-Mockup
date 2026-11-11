@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Enterprise WBR Segmentation Dashboard</title>
+<script>
+  /* Apply saved theme before first paint. Default: light neutral. */
+  (function(){ try { var t = localStorage.getItem('wbr-theme'); if (t === 'dark' || t === 'mistral' || t === 'light') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<style>
+  /* ============ THEMES ============ */
+  :root, [data-theme="light"]{
+    color-scheme:light;
+    --bg:#f4f4f2; --bg2:#ffffff; --panel:#ffffff; --panel2:#ececea;
+    --line:#cfcfc9; --line-soft:#e0e0da;
+    --ink:#1d1d1a; --ink2:#4d4d47; --muted:#76766d;
+    --accent:#26262a; --accent-hover:#3a3a40; --accent-ink:#26262a; --accent-contrast:#ffffff;
+    --chrome-bg:rgba(244,244,242,.97);
+    --track:#e6e6e1; --input-bg:#ffffff; --th-bg:#ececea; --mark:#1d1d1a;
+    --chart2:#6b6b66;
+    --tag-bg:#ececea; --tag-line:#cfcfc9;
+    --talk-bg:#eeeeea; --talk-line:#cfcfc9; --talk-ink:#2c2c27; --talk-k:#55554e;
+    --verdict-bg:#fbf3d7; --verdict-line:#c9a227; --verdict-k:#7c6110;
+    --good-bg:#e4f2e9; --bad-bg:#fbe9e6;
+    --sov-bg:#ececea; --sov-ink:#3d3d38; --sov-line:#c4c4bd;
+    --reg-bg:#ececea; --reg-ink:#3d3d38; --reg-line:#c4c4bd;
+    --core-bg:#ececea; --core-ink:#3d3d38; --core-line:#c4c4bd;
+    --pub-bg:#ececea; --pub-ink:#3d3d38; --pub-line:#c4c4bd;
+    --green:#1d7a4c; --red:#b3372a; --amber:#b07d10;
+  }
+  [data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#101012; --bg2:#17171a; --panel:#1b1b1f; --panel2:#242429;
+    --line:#37373d; --line-soft:#28282e;
+    --ink:#ececea; --ink2:#b6b6b1; --muted:#8b8b86;
+    --accent:#e8e8e6; --accent-hover:#ffffff; --accent-ink:#e8e8e6; --accent-contrast:#17171a;
+    --chrome-bg:rgba(16,16,18,.97);
+    --track:#0a0a0c; --input-bg:#0d0d0f; --th-bg:#202025; --mark:#ffffff;
+    --chart2:#9a9a95;
+    --tag-bg:#242429; --tag-line:#37373d;
+    --talk-bg:#1e1e22; --talk-line:#37373d; --talk-ink:#d9d9d4; --talk-k:#a9a9a3;
+    --verdict-bg:#2b2413; --verdict-line:#7a6422; --verdict-k:#f5b83d;
+    --good-bg:#122419; --bad-bg:#2b1712;
+    --sov-bg:#242429; --sov-ink:#cfcfc9; --sov-line:#4a4a52;
+    --reg-bg:#242429; --reg-ink:#cfcfc9; --reg-line:#4a4a52;
+    --core-bg:#242429; --core-ink:#cfcfc9; --core-line:#4a4a52;
+    --pub-bg:#242429; --pub-ink:#cfcfc9; --pub-line:#4a4a52;
+    --green:#3ecf8e; --red:#f26d5b; --amber:#f5b83d;
+  }
+  [data-theme="mistral"]{
+    color-scheme:dark;
+    --bg:#0e1319; --bg2:#121a22; --panel:#17212c; --panel2:#1c2836;
+    --line:#2a3949; --line-soft:#22303f;
+    --ink:#e9eff5; --ink2:#aebccb; --muted:#7e90a3;
+    --accent:#ff7a1a; --accent-hover:#ff8c3d; --accent-ink:#ffb37e; --accent-contrast:#1a0f04;
+    --chrome-bg:rgba(14,19,25,.97);
+    --track:#0c1117; --input-bg:#0c1117; --th-bg:#1a2531; --mark:#ffffff;
+    --chart2:#5aa2ff;
+    --tag-bg:#3a2317; --tag-line:#7a4a22;
+    --talk-bg:#16293f; --talk-line:#2f5b8f; --talk-ink:#d7e6f7; --talk-k:#8fc0ff;
+    --verdict-bg:#2b2413; --verdict-line:#7a6422; --verdict-k:#f5b83d;
+    --good-bg:#14231b; --bad-bg:#2b1712;
+    --sov-bg:#3a2317; --sov-ink:#ffb37e; --sov-line:#7a4a22;
+    --reg-bg:#16293f; --reg-ink:#8fc0ff; --reg-line:#2f5b8f;
+    --core-bg:#123427; --core-ink:#7fe3b2; --core-line:#256b4a;
+    --pub-bg:#16293f; --pub-ink:#8fc0ff; --pub-line:#2f5b8f;
+    --green:#3ecf8e; --red:#f26d5b; --amber:#f5b83d;
+  }
+  :root{ --radius:12px; --blue:#5aa2ff; }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:0}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  button{font-family:inherit;cursor:pointer}
+  a{color:var(--chart2)}
+
+  /* ---------- Deck chrome ---------- */
+  .deckbar{
+    position:sticky;top:0;z-index:40;background:var(--chrome-bg);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);padding:10px 16px;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  }
+  .deckbar .brand{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:800;font-size:14.5px;letter-spacing:-.01em}
+  .deckbar .brand span{color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+  .chip{
+    background:var(--panel);color:var(--ink2);border:1px solid var(--line-soft);border-radius:999px;
+    padding:5px 11px;font-size:12px;font-weight:700;
+  }
+  .chip:hover{border-color:var(--accent);color:var(--ink)}
+  .chip.active{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast)}
+  .chip .n{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:11px;margin-right:5px;opacity:.8}
+  .deck-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{
+    background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;
+    padding:8px 13px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn:hover{border-color:var(--muted)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast)}
+  .btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .counter{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .progress{height:3px;background:var(--track)}
+  .progress i{display:block;height:100%;background:var(--accent);transition:width .25s}
+
+  /* Theme switcher */
+  .theme-switch{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+  .theme-switch button{
+    background:transparent;border:1px solid transparent;color:var(--ink2);border-radius:999px;
+    padding:5px 11px;font-size:12px;font-weight:700;
+  }
+  .theme-switch button:hover{color:var(--ink)}
+  .theme-switch button.active{background:var(--accent);color:var(--accent-contrast);border-color:var(--accent)}
+  .theme-switch button.ts-mistral.active{background:#ff7a1a;border-color:#ff7a1a;color:#1a0f04}
+
+  .stage{max-width:1180px;margin:0 auto;padding:26px 20px 90px}
+  .slide{display:none}
+  .slide.current{display:block}
+  body.overview .slide{display:block;margin-bottom:34px}
+  body.overview .stage{padding-bottom:30px}
+
+  .slide-tag{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--accent-ink);border:1px solid var(--tag-line);background:var(--tag-bg);border-radius:999px;padding:5px 11px}
+  .slide h2{font-size:30px;font-weight:800;letter-spacing:-.015em;line-height:1.15;margin-top:14px;max-width:880px}
+  .slide .lede{color:var(--ink2);font-size:16px;line-height:1.6;max-width:820px;margin-top:10px}
+  .slide .lede strong{color:var(--ink)}
+
+  .panel{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);padding:18px;margin-top:18px}
+  .panel h3{font-size:15.5px;margin-bottom:6px}
+  .panel .sub{font-size:13px;color:var(--muted);margin-bottom:12px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.slide h2{font-size:24px}}
+
+  /* Talk track */
+  .talk{margin-top:18px;background:var(--talk-bg);border:1px solid var(--talk-line);border-radius:var(--radius);padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.talk{grid-template-columns:1fr}}
+  .talk .k{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--talk-k);display:block;margin-bottom:4px}
+  .talk p{margin:0;font-size:14px;line-height:1.6;color:var(--talk-ink)}
+  .src{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.55}
+  .src strong{color:var(--ink2)}
+
+  /* KPI strip */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);padding:15px 16px}
+  .kpi .label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);line-height:1.35}
+  .kpi .value{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:27px;font-weight:600;margin-top:5px}
+  .kpi .detail{font-size:12.5px;color:var(--ink2);margin-top:4px;line-height:1.45}
+  .kpi.good .value{color:var(--green)} .kpi.warn .value{color:var(--amber)} .kpi.bad .value{color:var(--red)}
+  /* Target + trend context lines under headline metrics: always fully
+     visible at every width. Lines wrap onto two lines inside the narrow
+     quarter-width KPI tiles rather than being ellipsised, so the
+     last-quarter figure, the this-time-last-year figure and the
+     "sample data" label are never cut off. */
+  .ctx-lines{margin-top:10px;border-top:1px dashed var(--line-soft);padding-top:8px;display:grid;gap:3px;text-align:left}
+  .ctx-line{font-size:12px;line-height:1.45;color:var(--ink2);white-space:normal;overflow:visible}
+  .ctx-line b{color:var(--ink);font-weight:700}
+  .ctx-line .up{color:var(--green);font-weight:800}
+  .ctx-line .down{color:var(--red);font-weight:800}
+  .ctx-line .ctx-sample{color:var(--muted);font-style:italic;white-space:nowrap}
+  .verdict{margin-top:16px;border-radius:var(--radius);padding:15px 17px;font-size:15.5px;line-height:1.6;background:var(--verdict-bg);border:1px solid var(--verdict-line);border-left:4px solid var(--amber)}
+  .verdict .k{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--verdict-k);display:block;margin-bottom:4px}
+  .verdict strong{color:var(--ink)}
+
+  /* Bars */
+  .bar-row{display:grid;grid-template-columns:190px 1fr 86px;gap:10px;align-items:center;margin:9px 0;font-size:13px}
+  @media(max-width:640px){.bar-row{grid-template-columns:120px 1fr 70px}}
+  .bar-row .bl{color:var(--ink2);font-weight:600;line-height:1.3}
+  .bar-row .bv{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;text-align:right;font-weight:600}
+  .bar-track{height:15px;background:var(--track);border-radius:5px;position:relative;overflow:hidden}
+  .bar-fill{position:absolute;top:0;bottom:0;left:0;border-radius:5px}
+  .bar-mark{position:absolute;top:0;bottom:0;width:2px;background:var(--mark);opacity:.9}
+
+  /* Tables */
+  .table-scroll{overflow-x:auto;border:1px solid var(--line-soft);border-radius:9px;background:var(--bg2)}
+  table{border-collapse:collapse;width:100%;min-width:640px}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line-soft);font-size:13.5px;vertical-align:top}
+  th{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--th-bg)}
+  td.num,th.num{text-align:right;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  .pill{display:inline-block;font-size:11px;font-weight:800;border-radius:99px;padding:2px 9px;white-space:nowrap}
+  .pill.sov{background:var(--sov-bg);color:var(--sov-ink);border:1px solid var(--sov-line)}
+  .pill.reg{background:var(--reg-bg);color:var(--reg-ink);border:1px solid var(--reg-line)}
+  .pill.core{background:var(--core-bg);color:var(--core-ink);border:1px solid var(--core-line)}
+  .pill.risk{background:#3a1d18;color:#ff9d8f;border:1px solid #7a3a2e}
+  [data-theme="light"] .pill.risk{background:#fbe9e6;color:#a02c1e;border-color:#e0a89f}
+  .pill.ok{background:#123427;color:#7fe3b2;border:1px solid #256b4a}
+  [data-theme="light"] .pill.ok{background:#e4f2e9;color:#14663d;border-color:#9dc9ac}
+  .pill.watch{background:#3a2f14;color:#ffd97a;border:1px solid #7a6422}
+  [data-theme="light"] .pill.watch{background:#fbf3d7;color:#7c6110;border-color:#d3b34e}
+
+  /* Bridge */
+  .bridge{display:flex;flex-wrap:wrap;gap:9px;align-items:stretch;margin-top:6px}
+  .bridge .term{background:var(--bg2);border:1px solid var(--line-soft);border-radius:9px;padding:11px 13px;flex:1;min-width:118px}
+  .bridge .term .t{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);line-height:1.35}
+  .bridge .term .v{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:19px;font-weight:600;margin-top:4px}
+  .bridge .term.result{background:var(--good-bg);border-color:var(--green)}
+  .bridge .term.result .v{color:var(--green)}
+  .bridge .op{display:flex;align-items:center;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:17px;color:var(--muted)}
+
+  /* Definition cards */
+  .defs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+  @media(max-width:900px){.defs{grid-template-columns:1fr}}
+  .def{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px}
+  .def .dn{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12px;color:var(--accent-ink);font-weight:700}
+  .def h3{font-size:16.5px;margin:5px 0 7px}
+  .def p{margin:0;color:var(--ink2);font-size:13.5px;line-height:1.6}
+  .def .ex{margin-top:10px;font-size:13px;color:var(--ink);background:var(--bg2);border:1px solid var(--line-soft);border-radius:8px;padding:9px 11px;line-height:1.5}
+
+  /* FDE calculator */
+  .fde-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.fde-grid{grid-template-columns:1fr}}
+  .fde-inputs{display:grid;gap:11px}
+  .fde-row{display:grid;grid-template-columns:1fr 92px;gap:10px;align-items:center;background:var(--bg2);border:1px solid var(--line-soft);border-radius:9px;padding:10px 12px}
+  .fde-row label{font-size:13px;font-weight:600;line-height:1.4}
+  .fde-row label small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;margin-top:2px;line-height:1.4}
+  .fde-row input{width:92px;background:var(--input-bg);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:8px;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:16px;font-weight:600;text-align:right}
+  .fde-row input:focus{outline:none;border-color:var(--accent)}
+  .fde-out{display:grid;gap:10px;align-content:start}
+  .fde-stat{background:var(--bg2);border:1px solid var(--line-soft);border-radius:9px;padding:12px 14px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .fde-stat .fl{font-size:13px;color:var(--ink2);font-weight:600}
+  .fde-stat .fv{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:20px;font-weight:600;white-space:nowrap}
+  .fde-stat.over{border-color:var(--red);background:var(--bad-bg)}
+  .fde-stat.over .fv{color:var(--red)}
+  .fde-stat.fits{border-color:var(--green);background:var(--good-bg)}
+  .fde-stat.fits .fv{color:var(--green)}
+  .assump{margin:0;padding-left:18px}
+  .assump li{margin:7px 0;color:var(--ink2);font-size:13.5px;line-height:1.6}
+  .assump li strong{color:var(--ink)}
+  .tag-basis{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+  .tag-basis.pub{background:var(--pub-bg);color:var(--pub-ink);border:1px solid var(--pub-line)}
+  .tag-basis.plan{background:var(--panel2);color:var(--ink2);border:1px solid var(--line)}
+
+  /* Discussion + references */
+  .disc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+  @media(max-width:900px){.disc-grid{grid-template-columns:1fr}}
+  .disc-card{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px}
+  .disc-card .n{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--accent-ink);font-weight:700;font-size:12px}
+  .disc-card h3{font-size:15.5px;line-height:1.4;margin:6px 0 7px}
+  .disc-card p{margin:0;color:var(--ink2);font-size:13.5px;line-height:1.6}
+  .refs{margin:8px 0 0;padding-left:18px}
+  .refs li{margin:9px 0;color:var(--ink2);font-size:13.5px;line-height:1.6}
+  .refs li strong{color:var(--ink)}
+  .sample-note{margin-top:16px;font-size:12.5px;color:var(--muted);border:1px dashed var(--line);border-radius:9px;padding:11px 13px;line-height:1.6}
+
+  /* Call to action */
+  .cta{margin-top:16px;background:var(--panel);border:1.5px solid var(--accent);border-radius:var(--radius);padding:14px 16px}
+  .cta-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:7px}
+  .cta-k{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;background:var(--accent);color:var(--accent-contrast);border-radius:99px;padding:3px 10px}
+  .cta-owner{font-size:12px;font-weight:700;color:var(--muted)}
+  .cta p{margin:0;font-size:14.5px;line-height:1.6;color:var(--ink2)}
+  .cta p strong{color:var(--ink)}
+  .cta .do{font-weight:800;color:var(--ink)}
+
+  .defs-4{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  @media(max-width:900px){.defs-4{grid-template-columns:1fr}}
+
+  /* Forecast checker */
+  .fc-input{width:76px;background:var(--input-bg);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:7px 8px;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:14.5px;font-weight:600;text-align:right}
+  .fc-input:focus{outline:none;border-color:var(--accent)}
+  .fc-cur{color:var(--muted);font-size:12px;font-weight:600}
+  .fc-diff{font-size:11.5px;color:var(--muted);margin-top:3px;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;white-space:nowrap}
+
+  /* Control centre + live components */
+  .ctl-label{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .btn-row{display:flex;flex-wrap:wrap;gap:7px}
+  .scen-btn{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:700}
+  .scen-btn:hover{border-color:var(--muted)}
+  .scen-btn.active{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast)}
+  .ctl-sliders{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  @media(max-width:700px){.ctl-sliders{grid-template-columns:1fr}}
+  .lever-head{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;margin-bottom:5px}
+  .lever-head b{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--accent-ink)}
+  .lever input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer}
+  .ctl-note{font-size:12.5px;color:var(--ink2);margin:11px 0 0;line-height:1.5}
+  .kpi.clickable{cursor:pointer}
+  .kpi.clickable:hover{border-color:var(--accent)}
+  .seg-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+  .seg-controls input[type="search"],.seg-controls select{background:var(--input-bg);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:8px 9px;font:inherit;font-size:13px}
+  .seg-controls input[type="search"]{flex:1;min-width:170px}
+  .seg-controls input:focus,.seg-controls select:focus{outline:none;border-color:var(--accent)}
+  .seg-controls .scen-btn.active{background:var(--accent);color:var(--accent-contrast)}
+  th.sortable{cursor:pointer}
+  th.sortable:hover{color:var(--ink)}
+  #segBody tr{cursor:pointer}
+  #segBody tr.is-focused,#fcBody tr.is-focused{background:var(--tag-bg)}
+  .seg-status{font-size:12.5px;color:var(--muted);margin-top:9px}
+  .tier-pills{display:inline-flex;gap:5px;align-items:center}
+  .tier-pills .tp-label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+
+  /* What I learned */
+  .learn-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  @media(max-width:900px){.learn-grid{grid-template-columns:1fr}}
+  .learn-card{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px}
+  .learn-card .n{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--accent-ink);font-weight:700;font-size:12px}
+  .learn-card h3{font-size:16.5px;line-height:1.35;margin:5px 0 10px}
+  .lr{display:grid;grid-template-columns:118px 1fr;gap:9px;margin:7px 0;font-size:13px;line-height:1.55}
+  @media(max-width:520px){.lr{grid-template-columns:1fr;gap:2px}}
+  .lr .lk{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:2px}
+  .lr p{margin:0;color:var(--ink2)}
+  .lr p strong{color:var(--ink)}
+  .lr.fix p{color:var(--ink)}
+
+  /* Bottom nav */
+  .decknav{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--chrome-bg);border-top:1px solid var(--line);
+    padding:10px 16px;display:flex;gap:10px;align-items:center;justify-content:space-between;
+  }
+  .decknav .hint{font-size:12px;color:var(--muted)}
+  @media(max-width:640px){.decknav .hint{display:none}}
+  body.overview .decknav .navbtns{visibility:hidden}
+
+  /* ---------- Device-aware layout ----------
+     Breakpoints by viewport width: phone < 768px, tablet 768-1024px, desktop > 1024px.
+     Touch is detected separately via (pointer: coarse) below and a JS matchMedia flag,
+     never by user-agent sniffing. Desktop (>1024px) keeps the full layout defined above.
+     Nothing that navigates or controls the deck is hidden at any size: on phones
+     navigation and controls stay visible, just compact. Only detail text
+     (slide subtitles) uses progressive disclosure, behind a "More" tap. */
+
+  /* Subtitle "More" toggle: only phones show it */
+  .lede-toggle{display:none}
+
+  /* ----- Tablet: 768-1024px, two-column compact ----- */
+  @media(min-width:768px) and (max-width:1024px){
+    .stage{padding:20px 18px 84px}
+    .deckbar{padding:8px 12px;gap:8px}
+    .deckbar .brand{font-size:13.5px}
+    .chip{padding:5px 9px;font-size:11.5px}
+    .theme-switch button{padding:5px 9px;font-size:11.5px}
+    .slide h2{font-size:26px}
+    .slide .lede{font-size:15px}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .defs{grid-template-columns:1fr 1fr}
+    .disc-grid{grid-template-columns:1fr 1fr}
+    .seg-controls{gap:7px}
+    .seg-controls input[type="search"],.seg-controls select{padding:7px 9px}
+    .panel{padding:16px}
+  }
+
+  /* ----- Phone: under 768px, stacked + compact headers, everything still visible ----- */
+  @media(max-width:767px){
+    /* Sticky compact header, all navigation visible and grouped:
+       Row 1: brand + theme switch. Row 2: slide chips in ONE scrollable row
+       (navigation is never hidden, it just stops wrapping into five rows).
+       Row 3: position counter + Overview. Total height stays well under
+       half the screen, with the content visible below it. */
+    .deckbar{gap:6px 8px;padding:8px 10px}
+    .deckbar .brand{order:1;flex:1 1 140px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:center}
+    .deck-actions{display:contents}
+    .theme-switch{order:2;padding:2px}
+    .theme-switch button{padding:6px 8px;font-size:11px;min-height:44px}
+    .chips{order:3;flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+    .chips::-webkit-scrollbar{display:none}
+    .chip{flex:0 0 auto;white-space:nowrap;display:inline-flex;align-items:center;min-height:44px;padding:8px 11px;font-size:12px}
+    .counter{order:4;font-size:11.5px;align-self:center}
+    #overviewBtn{order:5;margin-left:auto;padding:8px 12px;font-size:12px;min-height:44px}
+
+    /* Slide header: small tag on one line, compact title, subtitle (detail,
+       not navigation) clamped to two lines behind a "More" tap, so tag +
+       title + subtitle stay compact and the slide's key number shows fast. */
+    .stage{padding:12px 14px 28px}
+    .slide-tag{font-size:10px;padding:4px 9px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .slide h2{font-size:20px;line-height:1.22;margin-top:9px}
+    .slide .lede{font-size:14px;line-height:1.5;margin-top:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .slide.lede-open .lede{display:block;-webkit-line-clamp:unset;overflow:visible}
+    .lede-toggle{display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:none;border:none;padding:8px 2px;min-height:44px;font-size:12.5px;font-weight:700;color:var(--accent-ink);text-decoration:underline;text-underline-offset:3px}
+    .title-slide{padding-top:6px}
+    .title-slide h2{font-size:25px}
+    .panel{padding:14px;margin-top:14px}
+    .verdict{font-size:14px;padding:12px 14px}
+
+    /* Segmentation filters: all visible, grouped in one compact grid.
+       Search full row, stream dropdown + At-risk side by side, tier pills in
+       one wrapped row of small pills. Nothing collapsed, nothing hidden. */
+    .seg-controls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+    .seg-controls input[type="search"]{grid-column:1/-1;min-width:0;width:100%;padding:8px 9px;font-size:13px;min-height:44px}
+    .seg-controls select{min-width:0;width:100%;padding:8px;font-size:13px;min-height:44px}
+    .seg-controls #riskToggle{width:100%;padding:8px;font-size:12.5px;min-height:44px}
+    .seg-controls .tier-pills{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+    .tier-pills .tp-label{font-size:10px}
+    .tier-pills .scen-btn{padding:8px 10px;font-size:11.5px;white-space:nowrap;min-height:44px}
+
+    /* Scenario + what-if controls (verdict slide): all visible, one compact
+       wrapped row of smaller pills, sliders full width underneath. */
+    .btn-row{gap:6px}
+    .scen-btn{padding:8px 11px;font-size:12px;min-height:44px}
+    .ctl-sliders{grid-template-columns:1fr;gap:10px;margin-top:10px}
+    .lever input[type="range"]{height:32px}
+
+    /* Stacked single column on phones, 44px tap targets throughout */
+    .btn{min-height:44px}
+    /* Bottom Prev/Next sits in the page flow on phones instead of fixed,
+       so it can never cover content or controls (the sticky top header
+       keeps slide navigation reachable at all times) */
+    .decknav{position:static;padding:8px 10px}
+    .decknav .btn{min-height:44px;padding:8px 13px;font-size:13px}
+    .kpi .value{font-size:23px}
+    .fde-row input{min-height:44px}
+    .fc-input{min-height:44px}
+  }
+
+  /* ----- Touch devices (any width): enlarge tap targets ----- */
+  @media(hover:none) and (pointer:coarse){
+    .btn,.scen-btn,.chip{min-height:44px}
+    .theme-switch button{min-height:44px;padding-left:10px;padding-right:10px}
+    input,select{min-height:44px}
+    .agenda-item{padding:14px}
+    th.sortable{padding-top:12px;padding-bottom:12px}
+  }
+
+  .title-slide{padding-top:5vh}
+  .title-slide h2{font-size:40px;max-width:820px}
+  @media(max-width:767px){.title-slide h2{font-size:25px}}
+  .agenda-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px;max-width:900px}
+  @media(max-width:760px){.agenda-list{grid-template-columns:1fr}}
+  .agenda-item{display:flex;gap:11px;align-items:flex-start;background:var(--panel);border:1px solid var(--line-soft);border-radius:10px;padding:12px 14px;text-align:left;color:var(--ink);font:inherit;width:100%}
+  .agenda-item:hover{border-color:var(--accent)}
+  .agenda-item .n{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12px;font-weight:700;color:var(--accent-contrast);background:var(--accent);width:21px;height:21px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+  .agenda-item b{font-size:14.5px;display:block}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+  @media print{
+    .deckbar,.decknav,.progress{display:none}
+    .slide{display:block !important;margin-bottom:30px;page-break-inside:avoid}
+    .stage{padding-top:0}
+  }
+</style>
+</head>
+<body>
+
+<div class="deckbar">
+  <div class="brand">Enterprise WBR <span>·</span> Walkthrough</div>
+  <nav class="chips" id="chips" aria-label="Slides"></nav>
+  <div class="deck-actions">
+    <div class="theme-switch" role="group" aria-label="Theme">
+      <button type="button" data-theme-btn="light">Light</button>
+      <button type="button" data-theme-btn="dark">Dark</button>
+      <button type="button" data-theme-btn="mistral" class="ts-mistral">Mistral Orange</button>
+    </div>
+    <span class="counter" id="counter">1 / 9</span>
+    <button class="btn" id="overviewBtn" type="button">Overview</button>
+  </div>
+</div>
+<div class="progress"><i id="progressBar" style="width:11%"></i></div>
+
+<main class="stage" id="stage">
+
+  <!-- ============ SLIDE 1 · TITLE ============ -->
+  <section class="slide title-slide" data-title="Start">
+    <span class="slide-tag">A walkthrough, not a dashboard</span>
+    <h2>Inside an Enterprise AI Weekly Business Review: what one APAC quarter taught us</h2>
+    <p class="lede">Seven lessons from running a WBR for an <strong>enterprise AI business only</strong>: LLM APIs sold by the token, platform commitments customers draw down, forward-deployed engineering, and self-hosted open-weight deployments. One quarter, four segments, one scarce resource (FDE hours). <strong>Every number is sample data</strong>, but every lesson, definition and capacity figure is drawn from published practice, with sources on the last slide.</p>
+    <div class="verdict" style="margin-top:20px;max-width:900px">
+      <span class="k">Live executive summary &middot; rewrites itself as you change any number in this deck</span>
+      <span id="execSummaryText">Loading the quarter&hellip;</span>
+      <div class="ctx-lines">
+        <div class="ctx-line"><b>Target:</b> $48.0M bookings by week 13</div>
+        <div class="ctx-line"><b>Trend:</b> last quarter $44.9M actual <span class="up">&#9650;</span> &middot; this time last year $35.8M actual <span class="ctx-sample">&middot; sample data</span></div>
+      </div>
+    </div>
+    <div class="agenda-list" id="agendaList"></div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;This is not a metrics tour. Each slide is one lesson, and each lesson ends with the question we learned to ask. Steal the questions.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>Before we start: what does your current weekly review spend the most time on: status, numbers, or decisions?</p></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 2 · AI REVENUE STREAMS ============ -->
+  <section class="slide" data-title="AI revenue streams">
+    <span class="slide-tag">Foundation · Know what you sell</span>
+    <h2>Enterprise AI makes money four ways, and each one forecasts differently</h2>
+    <p class="lede">Before any number in this deck makes sense, the revenue streams have to be separated. An AI business is not a CRM business: <strong>the pricing unit, the revenue timing and the risk are different in every stream</strong>, so a WBR that blends them produces one confident, wrong number. The segments on the next slides map to these streams. In this deck&rsquo;s worked example, <strong>streams 1 and 2 are the main story</strong>: usage and the commitments that draw down against it. Streams 3 and 4 are the two delivery constraints that decide whether the first two actually land.</p>
+    <div class="defs-4">
+      <div class="def"><span class="dn">STREAM 1 · USAGE API</span><h3>LLM API usage, paid per token</h3><p>Customers pay for what they consume: input tokens, output tokens and cached input are priced separately on published rate cards, and reasoning-heavy models cost more per call. There is no licence event: revenue is the sum of millions of API calls, so it compounds with adoption and drops the day usage drops.</p><div class="ex">Forecast it from <strong>usage curves</strong> (tokens per day, per workload), never from signatures.</div></div>
+      <div class="def"><span class="dn">STREAM 2 · COMMITMENTS</span><h3>Enterprise commitments with drawdown</h3><p>The customer signs an annual (or multi-year) spend commitment and draws it down as usage accrues. Usage above the commit bills as overage; at term end there is a true-up. The catch this whole deck returns to: <strong>signing is not revenue</strong>. Revenue recognises as the customer actually consumes, and consumption ramps weeks or months behind the signature.</p><div class="ex">Track two numbers: <strong>bookings</strong> (signed) and <strong>consumption</strong> (drawn down). They are never the same in a given quarter.</div></div>
+      <div class="def"><span class="dn">STREAM 3 · FDE &amp; SERVICES</span><h3>Forward-deployed engineering</h3><p>Paid proofs of concept and proofs of value, deployment projects, and production go-live work, sometimes standalone, sometimes bundled into a commitment. This stream is sold in <strong>engineer-hours</strong>, which makes it the only stream with a hard physical ceiling: when the FDEs are booked out, this revenue stops, however strong demand is.</p><div class="ex">Forecast it from <strong>capacity</strong> (slide 8), not from pipeline.</div></div>
+      <div class="def"><span class="dn">STREAM 4 · SELF-HOSTED</span><h3>On-prem and private deployment</h3><p>Open-weight models deployed in the customer&rsquo;s own cloud or data centre, charged as a platform or licence fee plus deployment services. Regulated buyers choose this stream precisely because data never leaves their boundary, which means <strong>data-residency approvals and security reviews, not price, decide the timing</strong>.</p><div class="ex">Forecast it from <strong>gates cleared</strong>, not from stages: a deal behind a residency gate has a binary, not a probability.</div></div>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;Four streams, four forecasting methods. Usage from curves, commitments from drawdown, services from capacity, self-hosted from gates. Most AI forecast errors are a method applied to the wrong stream.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>Which of the four streams is your number actually made of, and does your current forecast treat it that way?</p></div>
+    </div>
+    <p class="src"><strong>Where this comes from:</strong> per-token pricing with separate input, output and cached-input rates is the published pricing model of the major LLM providers (public pricing pages); commitment drawdown, overage and true-up are the standard published structure of enterprise AI agreements. See Sources, slide 10.</p>
+  </section>
+
+  <!-- ============ SLIDE 3 · VERDICT FIRST ============ -->
+  <section class="slide" data-title="The verdict first">
+    <span class="slide-tag">Lesson 1 · Order matters</span>
+    <h2>Start with the verdict, not the data</h2>
+    <p class="lede">A WBR that opens with tables spends 40 minutes discovering what the first slide should have said. We learned to open with four numbers and one sentence: <strong>are we going to land the quarter, and what would change that?</strong></p>
+    <div class="panel" id="controlCentre">
+      <h3>Control centre: change the quarter, watch the whole deck react</h3>
+      <p class="sub">Scenarios and what-if levers recalculate everything from one set of numbers: these KPIs, the segment table, the forecast bars, the movement bridge, the sales-forecast check and every call to action.</p>
+      <div class="ctl-label">Scenario</div>
+      <div class="btn-row" id="scenRow">
+        <button type="button" class="scen-btn active" data-scen="base">Base case</button>
+        <button type="button" class="scen-btn" data-scen="gate">JP/KR gate clears</button>
+        <button type="button" class="scen-btn" data-scen="telco">Telco slips a quarter</button>
+        <button type="button" class="scen-btn" data-scen="surge">Usage surge</button>
+      </div>
+      <div class="ctl-sliders">
+        <div class="lever"><div class="lever-head"><span>What-if: pipeline volume</span><b id="pipeFVal">100%</b></div><input type="range" id="pipeF" min="70" max="130" value="100" step="5" aria-label="Pipeline volume what-if"></div>
+        <div class="lever"><div class="lever-head"><span>What-if: commit confidence</span><b id="commitFVal">100%</b></div><input type="range" id="commitF" min="85" max="110" value="100" step="5" aria-label="Commit confidence what-if"></div>
+      </div>
+      <p class="ctl-note" id="scenNote">Base case: the quarter as it stands in week 7.</p>
+    </div>
+    <div class="kpis">
+      <div class="kpi warn clickable" data-goto="3" title="Go to the segment scoreboard"><div class="label">Quarter bookings target</div><div class="value">$48.0M</div><div class="detail">APAC Enterprise AI, 13-week quarter, week 7. Tap any tile to jump to its slide</div><div class="ctx-lines"><div class="ctx-line"><b>Target:</b> $48.0M by week 13</div><div class="ctx-line"><b>Trend:</b> last quarter&rsquo;s target $44.0M <span class="up">&#9650;</span> &middot; this time last year $36.0M <span class="ctx-sample">&middot; sample data</span></div></div></div>
+      <div class="kpi clickable" data-goto="4" title="Go to coverage, commit and forecast"><div class="label">Signed bookings so far</div><div class="value" id="kpiBooked">$19.8M</div><div class="detail">41% of target at 54% of the quarter. Recognised revenue is lower: usage ramps after signing</div><div class="ctx-lines"><div class="ctx-line"><b>Target:</b> $26.0M booked by week 7 on the pace plan</div><div class="ctx-line"><b>Trend:</b> last quarter at week 7 $17.4M <span class="up">&#9650;</span> &middot; this time last year $12.9M <span class="ctx-sample">&middot; sample data</span></div></div></div>
+      <div class="kpi warn clickable" data-goto="4" title="Go to coverage, commit and forecast"><div class="label">Bookings commit</div><div class="value" id="kpiCommit">$41.2M</div><div class="detail" id="kpiCommitDetail">86% of target. Commitments and licences the team will be held to signing</div><div class="ctx-lines"><div class="ctx-line"><b>Target:</b> $48.0M bookings target</div><div class="ctx-line"><b>Trend:</b> last quarter week-7 commit $39.8M <span class="up">&#9650;</span> &middot; this time last year $30.6M <span class="ctx-sample">&middot; sample data</span></div></div></div>
+      <div class="kpi good clickable" data-goto="3" title="Go to the segment scoreboard"><div class="label">Pipeline coverage</div><div class="value" id="kpiCoverage">2.4&times;</div><div class="detail">Qualified pipeline (incl. active PoCs and PoVs) vs. the $28.2M still to book</div><div class="ctx-lines"><div class="ctx-line"><b>Target:</b> 3.0&times; coverage at week 7</div><div class="ctx-line"><b>Trend:</b> last quarter 2.1&times; <span class="up">&#9650;</span> &middot; this time last year 1.9&times; <span class="ctx-sample">&middot; sample data</span></div></div></div>
+    </div>
+    <div class="verdict">
+      <span class="k">The one-sentence verdict &middot; live</span>
+      <strong id="verdRag">Amber.</strong> <span id="verdText">The bookings quarter is landable, but only if the JP/KR self-hosted segment clears its data-residency gate by week 9, and recognised revenue will trail bookings all quarter because consumption ramps behind every signature. Everything else in this review exists to test that sentence.</span>
+    </div>
+    <div class="cta">
+      <div class="cta-head"><span class="cta-k">Call to action</span><span class="cta-owner">Owner: WBR chair &middot; Timing: escalate today, decide by week 9</span></div>
+      <p><strong>What the number means:</strong> <span id="ctaVerdictWhy">commit is $6.8M (14%) under target with six weeks left, and the gap traces back to one gated segment.</span> <span class="do">Do this:</span> <span id="ctaVerdictDo">escalate the JP/KR data-residency gate in this meeting and name its owner out loud. If the gate is not cleared by week 9, re-plan the quarter around the commit number, not the target.</span></p>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;If the verdict fits in one sentence, the meeting has a spine. If it takes a paragraph, nobody actually knows.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>Could your team write this sentence for your current quarter right now, without opening a spreadsheet?</p></div>
+    </div>
+    <p class="src"><strong>Where this comes from:</strong> Amazon&rsquo;s WBR practice, described in <em>Working Backwards</em> (Carr &amp; Bryar, 2021), starts from the output metrics and the narrative, not from raw tables. See Sources, slide 10.</p>
+  </section>
+
+  <!-- ============ SLIDE 3 · SEGMENTATION ============ -->
+  <section class="slide" data-title="Segment, always">
+    <span class="slide-tag">Lesson 2 · Segmentation</span>
+    <h2>One blended number hides every problem worth having</h2>
+    <p class="lede">Enterprise AI is not one business. A self-hosted open-weight deployment in Tokyo and a usage-based API account in Sydney differ in pricing unit (licence vs. tokens), revenue timing, security gate and forecast behaviour. <strong>Segment by deployment model and revenue stream</strong>, or the strong segments will quietly subsidise the weak ones in every report.</p>
+    <div class="panel">
+      <h3>The segment scoreboard (sample data, live)</h3>
+      <p class="sub">Same four numbers per segment: target, commit, coverage, and the one risk that matters. Click a column header to sort, search or filter the segments, and click a row to focus it across the deck.</p>
+      <div class="seg-controls">
+        <input type="search" id="segSearch" placeholder="Search segments (try &lsquo;API&rsquo; or &lsquo;self-hosted&rsquo;)" aria-label="Search segments">
+        <select id="segTier" aria-label="Filter by revenue stream">
+          <option value="">All streams</option>
+          <option value="Stream 1">Stream 1 · Usage API</option>
+          <option value="Stream 2">Stream 2 · Commitments</option>
+          <option value="Stream 4">Stream 4 · Self-hosted</option>
+        </select>
+        <span class="tier-pills"><span class="tp-label">Tier</span><button type="button" class="scen-btn active" data-tierabc="">All</button><button type="button" class="scen-btn" data-tierabc="S">S · Sovereign</button><button type="button" class="scen-btn" data-tierabc="R">R · Regulated</button><button type="button" class="scen-btn" data-tierabc="C">C · Core</button></span>
+        <button type="button" class="scen-btn" id="riskToggle" aria-pressed="false">At-risk only</button>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Segment</th><th>Stream</th><th class="num sortable" data-sort="target">Target &#8597;</th><th class="num sortable" data-sort="commit">Commit &#8597;</th><th class="num sortable" data-sort="coverage">Coverage &#8597;</th><th>The risk that matters</th></tr></thead>
+          <tbody id="segBody">
+            <tr><td><strong>JP/KR Self-Hosted (Open-Weight)</strong></td><td><span class="pill sov">Stream 4</span></td><td class="num">$12.0M</td><td class="num">$8.4M</td><td class="num">1.8&times;</td><td><span class="pill risk">Gate</span> Data-residency approval still pending; models must run in-country and two deals cannot sign without it</td></tr>
+            <tr><td><strong>ANZ API-First (Usage-Based)</strong></td><td><span class="pill core">Stream 1</span></td><td class="num">$13.0M</td><td class="num">$12.6M</td><td class="num">3.1&times;</td><td><span class="pill ok">Healthy</span> Token usage compounding week on week; no single customer above 12% of commit</td></tr>
+            <tr><td><strong>SEA Platform Commitments</strong></td><td><span class="pill core">Stream 2</span></td><td class="num">$11.0M</td><td class="num">$10.1M</td><td class="num">2.9&times;</td><td><span class="pill watch">Watch</span> Signed commitments drawing down slower than plan, so recognised revenue lags the bookings</td></tr>
+            <tr><td><strong>Telco &amp; FSI Private Deployment</strong></td><td><span class="pill reg">Stream 4</span></td><td class="num">$12.0M</td><td class="num">$10.1M</td><td class="num">2.2&times;</td><td><span class="pill watch">Watch</span> Security reviews for in-boundary deployment slipping one quarter to the right</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ctx-lines">
+        <div class="ctx-line"><b>Target:</b> $48.0M combined across the four segments</div>
+        <div class="ctx-line"><b>Trend:</b> last quarter $44.9M actual combined <span class="up">&#9650;</span> &middot; this time last year $35.8M actual <span class="ctx-sample">&middot; sample data</span></div>
+      </div>
+    </div>
+    <div class="cta">
+      <div class="cta-head"><span class="cta-k">Call to action</span><span class="cta-owner">Owner: JP/KR segment lead &middot; Timing: start this week, checkpoint every WBR</span></div>
+      <p><strong>What the number means:</strong> <span id="ctaSegWhy">self-hosted coverage of 1.8&times; sits well under the 2.4&times; blended average, and two deals physically cannot sign until residency approval lands.</span> <span class="do">Do this:</span> <span id="ctaSegDo">open the escalation with the customer&rsquo;s named sponsor this week and report gate status at every WBR until it clears. Any deal still gated at week 9 comes out of commit.</span></p>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;Look at the coverage column. The blended 2.4&times; looks fine. The sovereign segment at 1.8&times; with a hard gate is the whole story of this quarter.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>What is the equivalent of the sovereignty gate in your business: the one external approval a whole segment waits on?</p></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 4 · THREE PROMISES ============ -->
+  <section class="slide" data-title="Three promises">
+    <span class="slide-tag">Lesson 3 · Forecast language</span>
+    <h2>Coverage, commit and forecast are three different promises</h2>
+    <p class="lede">Most forecast fights are vocabulary fights. Half the room means &ldquo;what&rsquo;s possible&rdquo;, the other half means &ldquo;what I&rsquo;ll be fired for missing&rdquo;. <strong>Name the three numbers and never let one do another&rsquo;s job.</strong></p>
+    <div class="defs">
+      <div class="def"><span class="dn">01 · COVERAGE</span><h3>What could happen</h3><p>Open pipeline divided by what is left to book. A health metric, not a promise. Below roughly 2&times; at mid-quarter, no heroic close rate saves you.</p><div class="ex">This quarter: <strong id="exCoverage">2.4&times;</strong> overall, <span id="exCoverageSeg">1.8&times;</span> in the self-hosted segment.</div></div>
+      <div class="def"><span class="dn">02 · COMMIT</span><h3>Bookings we will be held to</h3><p>The signed number the team stakes its name on: commitments, licences and services with a named buyer, a dated next step and no unresolved external gate. In AI, commit is a <strong>bookings</strong> promise, not a revenue one.</p><div class="ex">This quarter: <strong id="exCommit">$41.2M of bookings</strong>, <span id="exCommitPct">86% of target</span>.</div></div>
+      <div class="def"><span class="dn">03 · FORECAST</span><h3>Two numbers, always</h3><p>AI needs a <strong>bookings forecast</strong> (what will sign) and a <strong>consumption forecast</strong> (what customers will actually use and we can recognise). They diverge because usage ramps after signing: a commitment signed in week 10 may draw down mostly next quarter.</p><div class="ex">This quarter: <strong>bookings <span id="exForecast">$45.2M</span></strong>, recognised revenue <strong id="exRecognised">$38.4M</strong>.</div></div>
+    </div>
+    <div class="panel">
+      <h3>Where the numbers sit against target</h3>
+      <p class="sub">The tick marks the $48.0M bookings target. The lowest bar is not bad news, it is physics: recognised revenue trails bookings while API usage and commitment drawdown ramp.</p>
+      <div class="bar-row"><span class="bl">Bookings commit</span><div class="bar-track"><div class="bar-fill" id="barCommitFill" style="width:85.8%;background:var(--amber)"></div><div class="bar-mark" style="left:99%"></div></div><span class="bv" id="barCommitVal">$41.2M</span></div>
+      <div class="bar-row"><span class="bl">Bookings forecast</span><div class="bar-track"><div class="bar-fill" id="barForecastFill" style="width:94.2%;background:var(--chart2)"></div><div class="bar-mark" style="left:99%"></div></div><span class="bv" id="barForecastVal">$45.2M</span></div>
+      <div class="bar-row"><span class="bl">Recognised revenue forecast</span><div class="bar-track"><div class="bar-fill" id="barRecogFill" style="width:80%;background:var(--green)"></div><div class="bar-mark" style="left:99%"></div></div><span class="bv" id="barRecogVal">$38.4M</span></div>
+      <div class="ctx-lines">
+        <div class="ctx-line"><b>Target:</b> $48.0M bookings &middot; $39.5M recognised revenue plan</div>
+        <div class="ctx-line"><b>Trend:</b> last quarter week-11 call $45.1M vs $44.9M actual <span class="up">&#9650;</span> &middot; this time last year $35.8M actual <span class="ctx-sample">&middot; sample data</span></div>
+      </div>
+    </div>
+    <div class="cta">
+      <div class="cta-head"><span class="cta-k">Call to action</span><span class="cta-owner">Owner: GTM Strategy &amp; Ops &middot; Timing: weeks 7&ndash;9</span></div>
+      <p><strong>What the numbers mean:</strong> <span id="ctaPromWhy">the $45.2M bookings forecast assumes upside that today&rsquo;s coverage does not support in the segment that needs it most, and recognised revenue ($38.4M) depends on drawdown pace, not signatures.</span> <span class="do">Do this:</span> point all new pipeline generation at the self-hosted segment for the next two weeks, and review SEA drawdown weekly until it matches plan. If self-hosted coverage is not above 2.2&times; by week 9, planning switches to commit bookings and the lower consumption number.</p>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;When someone says &lsquo;the forecast&rsquo;, ask which of the three they mean. That one question ended most of our arguments.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>Which of the three numbers does your leadership actually plan against? Is that the right one?</p></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 5 · MOVEMENT ============ -->
+  <section class="slide" data-title="Movement, not status">
+    <span class="slide-tag">Lesson 4 · Week over week</span>
+    <h2>Talk about movement, not status</h2>
+    <p class="lede">A commit of $41.2M is a photograph. The review should be about the film: <strong>what moved since last week, and why.</strong> If the bridge does not reconcile to the dollar, someone is describing deals from memory.</p>
+    <div class="panel">
+      <h3>Commit bridge, week 6 &rarr; week 7 (sample data)</h3>
+      <p class="sub">Every WBR opens the deal discussion here. New, expanded, slipped: nothing else gets airtime until the bridge is explained.</p>
+      <div class="bridge">
+        <div class="term"><div class="t">Last week commit</div><div class="v" id="brLast">$39.6M</div></div>
+        <div class="op">+</div>
+        <div class="term"><div class="t">New commits</div><div class="v" id="brNew">$2.1M</div></div>
+        <div class="op">+</div>
+        <div class="term"><div class="t">Expansions</div><div class="v" id="brExp">$1.3M</div></div>
+        <div class="op">&minus;</div>
+        <div class="term"><div class="t">Slips &amp; losses</div><div class="v" id="brSlip">$1.8M</div></div>
+        <div class="op">=</div>
+        <div class="term result"><div class="t">This week commit</div><div class="v" id="brNow">$41.2M</div></div>
+      </div>
+      <p style="margin:12px 0 0;color:var(--ink2);font-size:13.5px;line-height:1.6">The honest line in this bridge is the slips: $1.8M, almost all Telco procurement sliding right. Slips named early are a planning input. Slips discovered in week 12 are a surprise, and surprises are a management failure, not a market one.</p>
+      <div class="ctx-lines">
+        <div class="ctx-line"><b>Target:</b> hold net movement at +$1.6M a week</div>
+        <div class="ctx-line"><b>Trend:</b> last quarter week 6&rarr;7 net +$1.1M <span class="up">&#9650;</span> &middot; this time last year net +$0.6M <span class="ctx-sample">&middot; sample data</span></div>
+      </div>
+    </div>
+    <div class="cta">
+      <div class="cta-head"><span class="cta-k">Call to action</span><span class="cta-owner">Owner: Telco lead &middot; Timing: next WBR</span></div>
+      <p><strong>What the number means:</strong> slips were the week&rsquo;s biggest movement ($1.8M) and they are concentrated in one segment, which makes them a pattern, not bad luck. <span class="do">Do this:</span> bring a deal-by-deal recovery plan to the next WBR, and apply the rule from today: any deal that slips twice leaves commit automatically, no debate.</p>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;Status is &lsquo;the deal is in stage 4&rsquo;. Movement is &lsquo;the deal lost its economic buyer on Tuesday&rsquo;. Only one of those lets us act.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>What was your biggest slip last quarter, and in which week did the review first hear about it?</p></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 6 · FORECAST BIAS ============ -->
+  <section class="slide" data-title="Forecast bias">
+    <span class="slide-tag">Lesson 5 · Post-mortems</span>
+    <h2>Every forecast method has a known bias. Post-mortem it, or repeat it</h2>
+    <p class="lede">We ran four ways of calling the number side by side for two quarters and scored each against actuals. None was &ldquo;right&rdquo;. Each was wrong in a <strong>predictable direction</strong>, which is almost as useful.</p>
+    <div class="panel">
+      <h3>Two quarters of forecast post-mortems (sample data)</h3>
+      <p class="sub">Error = week-7 forecast vs. quarter actual. Negative means the method called it low.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Method</th><th>How it works</th><th class="num">Avg. error</th><th>The bias to correct</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Rep commit</strong></td><td>Bottom-up: what each rep commits</td><td class="num">&minus;6%</td><td>Sandbagging. Reps protect the number they are judged on</td></tr>
+            <tr><td><strong>Manager roll-up</strong></td><td>Managers adjust their teams&rsquo; commits</td><td class="num">+3%</td><td>Optimism at each layer; small mark-ups compound</td></tr>
+            <tr><td><strong>Weighted pipeline</strong></td><td>Stage probability &times; deal value</td><td class="num">+9%</td><td>Stage inflation: deals sit in late stages they have not earned</td></tr>
+            <tr><td><strong>Segment call</strong></td><td>Commit adjusted per segment by its lead, in the WBR</td><td class="num">&minus;1%</td><td>Closest, because the bias conversation happens out loud</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Test it live: the sales forecast vs. the conversion math</h3>
+      <p class="sub">Type in the forecast sales is giving you, per segment. The conversion-implied number is commit plus open pipeline at that segment&rsquo;s historical conversion rate. If the two disagree by more than 10%, it gets flagged, because one of the two assumptions is wrong, and the WBR&rsquo;s job is to find out which one before anyone plans on the number.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Segment</th><th class="num">Commit</th><th class="num">Open pipeline</th><th class="num">Hist. conversion</th><th class="num">Conversion-implied</th><th>Sales forecast (edit it)</th><th>Check</th></tr></thead>
+          <tbody id="fcBody">
+            <tr data-name="JP/KR Self-Hosted (Open-Weight)" data-commit="8.4" data-pipe="7.5" data-conv="0.20">
+              <td><strong>JP/KR Self-Hosted (Open-Weight)</strong></td><td class="num">$8.4M</td><td class="num">$7.5M</td><td class="num">20%</td>
+              <td class="num fc-implied">$9.9M</td>
+              <td><span class="fc-cur">$</span> <input class="fc-input" type="number" value="11.6" step="0.1" min="0" aria-label="Sales forecast for JP/KR"> <span class="fc-cur">M</span></td>
+              <td><span class="pill fc-flag">Checking&hellip;</span><div class="fc-diff"></div></td>
+            </tr>
+            <tr data-name="ANZ API-First (Usage-Based)" data-commit="12.6" data-pipe="2.0" data-conv="0.30">
+              <td><strong>ANZ API-First (Usage-Based)</strong></td><td class="num">$12.6M</td><td class="num">$2.0M</td><td class="num">30%</td>
+              <td class="num fc-implied">$13.2M</td>
+              <td><span class="fc-cur">$</span> <input class="fc-input" type="number" value="13.0" step="0.1" min="0" aria-label="Sales forecast for ANZ"> <span class="fc-cur">M</span></td>
+              <td><span class="pill fc-flag">Checking&hellip;</span><div class="fc-diff"></div></td>
+            </tr>
+            <tr data-name="SEA Platform Commitments" data-commit="10.1" data-pipe="4.4" data-conv="0.25">
+              <td><strong>SEA Platform Commitments</strong></td><td class="num">$10.1M</td><td class="num">$4.4M</td><td class="num">25%</td>
+              <td class="num fc-implied">$11.2M</td>
+              <td><span class="fc-cur">$</span> <input class="fc-input" type="number" value="9.9" step="0.1" min="0" aria-label="Sales forecast for SEA"> <span class="fc-cur">M</span></td>
+              <td><span class="pill fc-flag">Checking&hellip;</span><div class="fc-diff"></div></td>
+            </tr>
+            <tr data-name="Telco &amp; FSI Private Deployment" data-commit="10.1" data-pipe="6.0" data-conv="0.17">
+              <td><strong>Telco &amp; FSI Private Deployment</strong></td><td class="num">$10.1M</td><td class="num">$6.0M</td><td class="num">17%</td>
+              <td class="num fc-implied">$11.1M</td>
+              <td><span class="fc-cur">$</span> <input class="fc-input" type="number" value="11.3" step="0.1" min="0" aria-label="Sales forecast for Telco and FSI"> <span class="fc-cur">M</span></td>
+              <td><span class="pill fc-flag">Checking&hellip;</span><div class="fc-diff"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ctx-lines">
+        <div class="ctx-line"><b>Target:</b> every segment within &plusmn;10% of its conversion-implied number</div>
+        <div class="ctx-line"><b>Trend:</b> last quarter 2 of 4 segments flagged at week 7 <span class="up">&#9650;</span> &middot; this time last year 3 of 4 flagged <span class="ctx-sample">&middot; sample data</span></div>
+      </div>
+      <div class="cta">
+        <div class="cta-head"><span class="cta-k">Call to action</span><span class="cta-owner">Owner: segment leads, with GTM Strategy &amp; Ops &middot; Timing: this WBR, rechecked next week</span></div>
+        <p><strong id="fcCtaWhy">Checking the numbers&hellip;</strong> <span class="do">Do this:</span> <span id="fcCtaDo"></span></p>
+      </div>
+      <h3 style="margin-top:20px">The hunch, stated as a lesson, not a law</h3>
+      <p style="margin:0;color:var(--ink2);font-size:13.5px;line-height:1.6">Watch for this pattern: a sales forecast tends to run <strong style="color:var(--ink)">rosy early in the quarter and get revised down as the quarter ages</strong>. Last quarter&rsquo;s call, week by week (sample data):</p>
+      <div style="margin-top:10px">
+        <div class="bar-row"><span class="bl">Week 3 call</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--chart2)"></div></div><span class="bv">$49.5M</span></div>
+        <div class="bar-row"><span class="bl">Week 7 call</span><div class="bar-track"><div class="bar-fill" style="width:94.5%;background:var(--chart2)"></div></div><span class="bv">$46.8M</span></div>
+        <div class="bar-row"><span class="bl">Week 11 call</span><div class="bar-track"><div class="bar-fill" style="width:91.1%;background:var(--chart2)"></div></div><span class="bv">$45.1M</span></div>
+        <div class="bar-row"><span class="bl">Actual</span><div class="bar-track"><div class="bar-fill" style="width:90.7%;background:var(--green)"></div></div><span class="bv">$44.9M</span></div>
+      </div>
+      <p style="margin:10px 0 0;color:var(--ink2);font-size:13.5px;line-height:1.6">It is a hunch about incentives, not an accusation: early in the quarter, optimism costs nothing and a big number keeps options open. So the earlier the week, the more evidence to demand behind a sales number: named deals, buyer actions, dated next steps. A forecast that survives those questions has earned its rosiness.</p>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;We did not find a better method. We got better at knowing how each method lies, and by roughly how much.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>When did you last compare a forecast you made mid-quarter with what actually landed? What did you learn?</p></div>
+    </div>
+    <p class="src"><strong>Where this comes from:</strong> the discipline of scoring forecasts against outcomes is the core of the WBR post-mortem practice described in <em>Working Backwards</em>; Andy Grove&rsquo;s <em>High Output Management</em> makes the same point about indicators: a metric is only useful once you know how it misleads. See Sources, slide 10.</p>
+  </section>
+
+  <!-- ============ SLIDE 7 · FDE CAPACITY ============ -->
+  <section class="slide" data-title="FDE capacity">
+    <span class="slide-tag">Lesson 6 · The real constraint</span>
+    <h2>The binding constraint is FDE hours, not pipeline</h2>
+    <p class="lede">Regulated and sovereign deals do not close on signatures alone: a forward-deployed engineer has to run the proof of concept, survive the security review and land the production deploy. <strong>Do the hours arithmetic before you celebrate the pipeline.</strong> Try it: change any input.</p>
+    <div class="panel">
+      <div class="fde-grid">
+        <div class="fde-inputs">
+          <div class="fde-row"><label>FDEs on the team<small>Forward-deployed engineers available this quarter</small></label><input type="number" id="inFdes" value="6" min="1" max="40" step="1"></div>
+          <div class="fde-row"><label>Deployable hours per FDE, per week<small>30 of a 40-hour week: see basis below</small></label><input type="number" id="inHours" value="30" min="5" max="40" step="1"></div>
+          <div class="fde-row"><label>Working weeks left in quarter<small>Week 7 of 13, allowing for leave and freeze periods</small></label><input type="number" id="inWeeks" value="6" min="1" max="13" step="1"></div>
+          <div class="fde-row"><label>FDE hours per deal, end to end<small>PoC + security review support + production deploy: see basis below</small></label><input type="number" id="inPerDeal" value="180" min="20" max="600" step="10"></div>
+          <div class="fde-row"><label>Deals needing FDE time<small>Commit + best-case deals in regulated and sovereign segments</small></label><input type="number" id="inDeals" value="7" min="0" max="40" step="1"></div>
+        </div>
+        <div class="fde-out">
+          <div class="fde-stat"><span class="fl">Supply: FDE hours available</span><span class="fv" id="outSupply">1,080</span></div>
+          <div class="fde-stat"><span class="fl">Demand: hours the pipeline needs</span><span class="fv" id="outDemand">1,260</span></div>
+          <div class="fde-stat" id="outGapBox"><span class="fl" id="outGapLabel">Gap</span><span class="fv" id="outGap">&minus;180</span></div>
+          <div class="fde-stat"><span class="fl">Deals the team can actually land</span><span class="fv" id="outDeals">6 of 7</span></div>
+          <p style="margin:2px 0 0;color:var(--ink2);font-size:13.5px;line-height:1.6" id="fdeVerdict">At these numbers the team is <strong style="color:var(--ink)">one deal short</strong>: either a seventh deal waits for next quarter, an FDE is borrowed, or scope per deal comes down. That is a decision for this room, not a surprise for week 12.</p>
+          <div class="ctx-lines">
+            <div class="ctx-line"><b>Target:</b> demand within the 1,080 hrs of supply</div>
+            <div class="ctx-line"><b>Trend:</b> last quarter 940 hrs demanded, 6 of 6 deals landed <span class="up">&#9650;</span> &middot; this time last year 720 hrs, 5 of 5 <span class="ctx-sample">&middot; sample data</span></div>
+          </div>
+          <div class="cta" style="margin-top:4px">
+            <div class="cta-head"><span class="cta-k">Call to action</span><span class="cta-owner">Owner: FDE lead, with GTM Strategy &amp; Ops &middot; Timing: start this week</span></div>
+            <p><strong id="fdeCtaWhy">Demand (1,260 hrs) already exceeds supply (1,080 hrs), so PoC and PoV requests arriving now will queue behind committed deploys.</strong> <span class="do">Do this:</span> <span id="fdeCtaDo">start onboarding FDEs this week. Recruiting plus ramp to deployable takes about 6 weeks, so starting now is what lands capacity before the queue starts slipping deals. In parallel, sequence 1 deal into next quarter and tell that customer now, not in week 12.</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Where these numbers come from</h3>
+      <p class="sub">Nothing on this slide is a guess presented as a fact. Each input is labelled: published benchmark, or planning assumption you should replace with your own team&rsquo;s actuals.</p>
+      <ul class="assump">
+        <li><strong>~30 deployable hours in a 40-hour week (75% utilisation).</strong> Professional-services and consulting teams plan billable utilisation in a 70&ndash;80% band: the remainder is standups, internal reviews, support interrupts and admin. An FDE booked at 40 deployable hours a week is booked on a fiction.<span class="tag-basis pub">Published benchmark</span></li>
+        <li><strong>The FDE model itself.</strong> Palantir created and named the role, and its public descriptions are consistent: engineers embedded with the customer, on site, building production systems rather than advising from a distance. OpenAI and Anthropic&rsquo;s published FDE job postings describe the same shape: deployment work split between customer sites and building, with substantial travel. On-site days are why per-deal hours cannot be compressed to zero.<span class="tag-basis pub">Published benchmark</span></li>
+        <li><strong>~180 FDE hours per regulated deal, end to end.</strong> Built up, not asserted: a scoped PoC is roughly 2&ndash;4 elapsed weeks of part-time engineering; security-review support is light on hours but long on calendar (questionnaires, architecture reviews, pen-test remediation) and blocks the signature; a production deploy in a customer&rsquo;s own environment is the largest block. Replace this input with your team&rsquo;s tracked actuals after one quarter.<span class="tag-basis plan">Planning assumption</span></li>
+        <li><strong>Ramp time is real.</strong> A new FDE is not deployable in week 1: product depth plus the customer&rsquo;s domain and security posture take weeks to absorb. Hiring in week 8 does not fix a week 9 capacity gap, which is why this slide sits inside a quarterly review, not a staffing request.<span class="tag-basis plan">Planning assumption</span></li>
+      </ul>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;Pipeline is a wish list until engineering hours say otherwise. This is the slide where the quarter&rsquo;s ambition meets physics.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>What is the scarce specialist hour in your business, and does your forecast ever check it before committing?</p></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 8 · DECISIONS ============ -->
+  <section class="slide" data-title="Decisions, not updates">
+    <span class="slide-tag">Lesson 7 · How it ends</span>
+    <h2>End with decisions and owners, never with updates</h2>
+    <p class="lede">A WBR that ends with &ldquo;thanks, lots covered&rdquo; starts next week from zero. Ours ends with a short list: <strong>each blocker has an owner and a date, and last week&rsquo;s list is read back first.</strong></p>
+    <div class="panel">
+      <h3>This week&rsquo;s blockers and decisions (sample data)</h3>
+      <p class="sub">Three items. If a review produces thirty, it produced none.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Item</th><th>Type</th><th>Owner</th><th>Due</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Escalate JP/KR data-residency approval</strong>: two sovereign deals cannot sign without it; needs a named sponsor on the customer side and a weekly checkpoint until it clears</td><td><span class="pill risk">Blocker</span></td><td>Segment lead</td><td class="num">Week 9</td></tr>
+            <tr><td><strong>Choose the seventh FDE deal</strong>: capacity covers six of seven gated deals (slide 8); decide which one is sequenced into next quarter and tell that customer this week, not in week 12</td><td><span class="pill watch">Decision</span></td><td>WBR chair</td><td class="num">This week</td></tr>
+            <tr><td><strong>Re-plan Telco commit</strong>: procurement slips moved $1.8M right; either pull two deals forward with executive sponsorship or cut the segment commit and reset the forecast honestly</td><td><span class="pill watch">Decision</span></td><td>Telco lead</td><td class="num">Week 8</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;Notice what is not on this list: anything without an owner, and anything that is just a status. If it is not a blocker or a decision, it belongs in the pre-read.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>Look at your last meeting&rsquo;s notes. How many items had a named owner and a date? What happened to the rest?</p></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 9 · DISCUSSION + SOURCES ============ -->
+  <section class="slide" data-title="Discussion &amp; sources">
+    <span class="slide-tag">Close · Discussion</span>
+    <h2>Take the questions, leave the dashboard</h2>
+    <p class="lede">The dashboard was never the point. If these three questions change how your next weekly review runs, the quarter did its teaching job.</p>
+    <div class="disc-grid">
+      <div class="disc-card"><span class="n">Q1</span><h3>Can we say the verdict in one sentence?</h3><p>If not, the review is collecting data instead of forming a judgement. Start next week&rsquo;s meeting by drafting the sentence together.</p></div>
+      <div class="disc-card"><span class="n">Q2</span><h3>Which segment is subsidising which?</h3><p>Pick your segments by how the work actually differs (gates, cycles, deployment), then check whether your blended number was hiding a weak one.</p></div>
+      <div class="disc-card"><span class="n">Q3</span><h3>What is our FDE constraint?</h3><p>Name the scarce specialist hour behind your commit, do the supply-and-demand arithmetic in the open, and let it change the forecast.</p></div>
+    </div>
+    <div class="panel">
+      <h3>Sources and further reading</h3>
+      <p class="sub">The practices and benchmarks in this walkthrough come from published sources. The segment figures, deals and errors are sample data for teaching, and are labelled as such throughout.</p>
+      <ul class="refs">
+        <li><strong>Bill Carr &amp; Colin Bryar, <em>Working Backwards</em> (2021).</strong> The primary published account of Amazon&rsquo;s Weekly Business Review: input vs. output metrics, starting from the metrics narrative, and post-morteming forecasts against actuals.</li>
+        <li><strong>Andy Grove, <em>High Output Management</em> (1983; reissued 1995).</strong> On indicators and leverage: why a metric only earns its place once you understand how it can mislead, the basis for the forecast-bias lesson on slide 7.</li>
+        <li><strong>Palantir, public descriptions of the Forward Deployed Engineer role</strong> (company careers materials and its 2020 SEC Form S-1). Palantir originated the FDE model: engineers deployed into the customer&rsquo;s environment to build production systems. The capacity framing on slide 8 follows that on-site, build-it-with-them shape of the work.</li>
+        <li><strong>OpenAI and Anthropic, published Forward Deployed Engineer job postings (2024&ndash;2025).</strong> Both describe FDE work as hands-on deployment with enterprise customers, split between customer sites and product feedback, with significant travel: independent confirmation that FDE time is spent in customer environments, not at a desk on call.</li>
+        <li><strong>Professional-services utilisation benchmarks.</strong> Consulting and services firms commonly plan billable utilisation at roughly 70&ndash;80% of a standard week, reserving the rest for internal work. Slide 8 uses the middle of that band: 30 deployable hours out of 40. Treat it as a planning benchmark and replace it with your own team&rsquo;s tracked utilisation.</li>
+        <li><strong>John Doerr, <em>Measure What Matters</em> (2018).</strong> Background on commit-style goal language: the distinction between a committed outcome (will be held to it) and an aspirational one, adapted on slide 5 to bookings commit vs. consumption forecast.</li>
+        <li><strong>Major LLM providers&rsquo; published pricing and enterprise pages</strong> (OpenAI, Anthropic, and peers). Per-token rate cards with separate input, output and cached-input prices are public, as is the enterprise commitment model: commit, draw down against usage, overage above the commit, true-up at term end. Slide 2&rsquo;s four revenue streams follow those published structures.</li>
+      </ul>
+      <div class="sample-note"><strong>About the numbers:</strong> quarter figures, segment data, deal movements and forecast errors in this walkthrough are an illustrative worked example, not any company&rsquo;s real results. The definitions, review structure and capacity benchmarks are the content; they are sourced above so you can check and adapt them.</div>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;That is the whole method: verdict first, segments always, movement over status, biases named, hours counted, decisions owned. The rest is practice.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>Which one of the seven lessons would change your next weekly review the most, and what will you try first?</p></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 11 · WHAT I LEARNED ============ -->
+  <section class="slide" data-title="What I learned">
+    <span class="slide-tag">Reflection · The valuable part</span>
+    <h2>What I learned, coming from outside enterprise</h2>
+    <p class="lede">My background is ads sales strategy and operations, not enterprise. Building this review is how I bootstrapped my understanding of enterprise AI GTM, and these five lessons are the part worth sharing: each one is a misunderstanding I had to correct, stated so the next person can skip it. This slide is written to be lifted straight into the repo README; the five headings are the short version.</p>
+    <div class="learn-grid">
+      <div class="learn-card"><span class="n">LEARNING 1</span><h3>Signing is not revenue</h3>
+        <div class="lr"><span class="lk">The challenge</span><p>My first forecast treated signed enterprise commitments as revenue for the quarter they signed in.</p></div>
+        <div class="lr"><span class="lk">I misunderstood</span><p>That a signature starts the revenue. In usage pricing, a signature starts a <strong>ramp</strong>: the customer still has to migrate workloads and consume.</p></div>
+        <div class="lr"><span class="lk">What I learned</span><p>Bookings and consumption are two different forecasts. In this deck&rsquo;s example: <strong>$45.2M of bookings vs. $38.4M recognised</strong>, and both numbers are honest.</p></div>
+        <div class="lr fix"><span class="lk">Fix / check</span><p><strong>Ask &ldquo;signed, or consumed?&rdquo; about every number, and track commitment drawdown weekly, not signatures.</strong></p></div>
+      </div>
+      <div class="learn-card"><span class="n">LEARNING 2</span><h3>Coverage without conversion is false comfort</h3>
+        <div class="lr"><span class="lk">The challenge</span><p>A blended 2.4&times; coverage figure made the quarter look safe in aggregate.</p></div>
+        <div class="lr"><span class="lk">I misunderstood</span><p>That pipeline volume is safety. Volume multiplied by a conversion rate you have not checked is just a bigger guess.</p></div>
+        <div class="lr"><span class="lk">What I learned</span><p>Per segment, the story flipped: self-hosted sat at <strong>1.8&times; coverage behind a binary residency gate</strong>, hidden inside the healthy blend.</p></div>
+        <div class="lr fix"><span class="lk">Fix / check</span><p><strong>Never quote coverage without the segment&rsquo;s conversion rate next to it, and never blend gated segments into an average.</strong></p></div>
+      </div>
+      <div class="learn-card"><span class="n">LEARNING 3</span><h3>FDE hours are inventory, not a tap</h3>
+        <div class="lr"><span class="lk">The challenge</span><p>When PoC and PoV demand spiked, my instinct was that engineering would flex to meet it.</p></div>
+        <div class="lr"><span class="lk">I misunderstood</span><p>FDE capacity as something you turn on. It is roughly <strong>30 deployable hours per engineer per week</strong>, and new engineers take weeks to onboard and ramp.</p></div>
+        <div class="lr"><span class="lk">What I learned</span><p>FDE hours behave like inventory with a lead time (slide 8): you forecast demand, hold stock, and reorder <strong>before</strong> you run out.</p></div>
+        <div class="lr fix"><span class="lk">Fix / check</span><p><strong>Run the FDE supply-vs-demand check every WBR, and start onboarding when projected demand passes 90% of supply, not 100%.</strong></p></div>
+      </div>
+      <div class="learn-card"><span class="n">LEARNING 4</span><h3>Sales forecasts run rosy early in the quarter</h3>
+        <div class="lr"><span class="lk">The challenge</span><p>Early-quarter sales calls kept coming in high, then revised down week by week (last quarter: $49.5M called in week 3, $44.9M actual).</p></div>
+        <div class="lr"><span class="lk">I misunderstood</span><p>At first I read the pattern as sandbagging in reverse, or as a data problem.</p></div>
+        <div class="lr"><span class="lk">What I learned</span><p>It is incentives plus genuine uncertainty: early optimism costs nothing. The earlier the week, the more <strong>evidence</strong> a number needs behind it.</p></div>
+        <div class="lr fix"><span class="lk">Fix / check</span><p><strong>Compare the sales call against the conversion-implied number weekly (slide 7); when they differ by more than 10%, ask which assumption is wrong.</strong></p></div>
+      </div>
+      <div class="learn-card"><span class="n">LEARNING 5</span><h3>Deployment mode changes how revenue is recognised</h3>
+        <div class="lr"><span class="lk">The challenge</span><p>I forecast API deals and self-hosted deals with the same stage probabilities, because both were &ldquo;late-stage enterprise deals&rdquo;.</p></div>
+        <div class="lr"><span class="lk">I misunderstood</span><p>That a deal is a deal. An API deal&rsquo;s revenue follows a usage curve after signing; a self-hosted deal&rsquo;s revenue follows <strong>gates</strong>: residency approval, security review, in-boundary deployment.</p></div>
+        <div class="lr"><span class="lk">What I learned</span><p>Gates are binary, not probabilistic. A deal behind an uncleared gate is not 70% likely; it is 0% until the gate opens, then it moves.</p></div>
+        <div class="lr fix"><span class="lk">Fix / check</span><p><strong>Forecast each stream with its own method: usage from curves, commitments from drawdown, services from capacity, self-hosted from gates cleared.</strong></p></div>
+      </div>
+      <div class="learn-card"><span class="n">THE META-LESSON</span><h3>Enterprise GTM is mostly translation</h3>
+        <div class="lr"><span class="lk">The challenge</span><p>Coming from ads, the vocabulary itself was the barrier: commit, coverage, drawdown, PoV, true-up.</p></div>
+        <div class="lr"><span class="lk">I misunderstood</span><p>That the jargon was decoration. Each term turned out to encode a real mechanical difference in how money moves.</p></div>
+        <div class="lr"><span class="lk">What I learned</span><p>The fastest way to learn enterprise GTM is to rebuild one quarter&rsquo;s numbers yourself and keep asking what has to be true for each number to be real.</p></div>
+        <div class="lr fix"><span class="lk">Fix / check</span><p><strong>If you are crossing over from another GTM motion, steal this deck&rsquo;s structure and swap in your own segment numbers.</strong></p></div>
+      </div>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;None of these lessons required enterprise experience to learn. They required one quarter of numbers and the discipline to ask what each number mechanically means.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>Which of these five did your team learn the hard way, and what would your sixth learning be?</p></div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 12 · OPEN QUESTIONS ============ -->
+  <section class="slide" data-title="Open questions">
+    <span class="slide-tag">Close · For discussion</span>
+    <h2>Questions this dashboard does not answer</h2>
+    <p class="lede">Every number in this walkthrough has a definition, a source, or a CTA. These five do not, and that is deliberate: they are the questions a dashboard can raise but never settle. <strong>Pick one and argue about it.</strong> That argument is worth more than another chart.</p>
+    <div class="disc-grid">
+      <div class="disc-card"><span class="n">Q1</span><h3>What does &ldquo;good coverage&rdquo; actually mean when conversion is unproven?</h3><p>3&times; pipeline made of deals that never close is 0&times; coverage wearing a costume. Is coverage a property of the pipeline, or of the evidence inside it?</p></div>
+      <div class="disc-card"><span class="n">Q2</span><h3>Who owns a forecast when sales and operations disagree?</h3><p>The person who calls the number, the person measured on it, or the room that heard both cases? And does the answer change who is allowed to be wrong?</p></div>
+      <div class="disc-card"><span class="n">Q3</span><h3>When should one strong proof of value outweigh a pipeline of maybes?</h3><p>A single PoV with a real buyer and real data is evidence. Twenty stage-3 deals are arithmetic. How much proof should it take to move a forecast?</p></div>
+      <div class="disc-card"><span class="n">Q4</span><h3>What are we optimising for beyond this quarter?</h3><p>Revenue now, logos that become references, deployments that teach the product team something? A WBR that only sees 13 weeks will reliably sacrifice all three of the others.</p></div>
+      <div class="disc-card"><span class="n">Q5</span><h3>If the number stopped mattering for one week, what would this meeting talk about?</h3><p>Whatever surfaces is probably what the review is actually for: coordination, honesty, or control. The dashboard cannot tell you which one your team needs most.</p></div>
+      <div class="disc-card"><span class="n">Q6</span><h3>Whose voice is missing from this data entirely?</h3><p>The customer appears here as pipeline, gates and slips. What would this quarter look like told from their side of the table, and which of our seven lessons would survive the retelling?</p></div>
+    </div>
+    <div class="talk">
+      <div><span class="k">Say</span><p>&ldquo;We are ending on purpose with questions that have no owner and no due date. Not everything valuable in a business review resolves into a decision.&rdquo;</p></div>
+      <div><span class="k">Ask the room</span><p>Pick the question your team would argue about longest. That is the one to take into next week&rsquo;s review.</p></div>
+    </div>
+  </section>
+
+</main>
+
+<div class="decknav">
+  <button class="btn navbtns" id="prevBtn" type="button">&larr; Prev</button>
+  <span class="hint">Use &larr; &rarr; keys to move through the slides &middot; Overview shows everything on one page</span>
+  <button class="btn primary navbtns" id="nextBtn" type="button">Next &rarr;</button>
+</div>
+
+<script>
+(function(){
+  /* ----- Theme switcher (persisted) ----- */
+  var themeBtns = Array.prototype.slice.call(document.querySelectorAll('[data-theme-btn]'));
+  function paintThemeBtns(){
+    var t = document.documentElement.getAttribute('data-theme') || 'light';
+    themeBtns.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-theme-btn') === t); });
+  }
+  themeBtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      var t = b.getAttribute('data-theme-btn');
+      document.documentElement.setAttribute('data-theme', t);
+      try { localStorage.setItem('wbr-theme', t); } catch (e) {}
+      paintThemeBtns();
+    });
+  });
+  paintThemeBtns();
+
+  /* ----- Slide deck ----- */
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var chipsBox = document.getElementById('chips');
+  var agenda = document.getElementById('agendaList');
+  var counter = document.getElementById('counter');
+  var bar = document.getElementById('progressBar');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var overviewBtn = document.getElementById('overviewBtn');
+  var current = 0;
+
+  slides.forEach(function(s, i){
+    var chip = document.createElement('button');
+    chip.className = 'chip'; chip.type = 'button';
+    chip.innerHTML = '<span class="n">' + (i+1) + '</span>' + s.getAttribute('data-title');
+    chip.addEventListener('click', function(){ exitOverview(); go(i); });
+    chipsBox.appendChild(chip);
+    if (i > 0 && agenda) {
+      var item = document.createElement('button');
+      item.className = 'agenda-item'; item.type = 'button';
+      item.innerHTML = '<span class="n">' + i + '</span><span><b>' + s.querySelector('h2').textContent + '</b></span>';
+      item.addEventListener('click', function(){ go(i); });
+      agenda.appendChild(item);
+    }
+  });
+  var chips = Array.prototype.slice.call(chipsBox.querySelectorAll('.chip'));
+
+  function render(){
+    slides.forEach(function(s, i){ s.classList.toggle('current', i === current); });
+    chips.forEach(function(c, i){ c.classList.toggle('active', i === current); });
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+    bar.style.width = ((current + 1) / slides.length * 100) + '%';
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+    nextBtn.textContent = current === slides.length - 1 ? 'End' : 'Next \u2192';
+  }
+  function go(i){
+    current = Math.max(0, Math.min(slides.length - 1, i));
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function exitOverview(){
+    if (document.body.classList.contains('overview')) {
+      document.body.classList.remove('overview');
+      overviewBtn.textContent = 'Overview';
+      render();
+    }
+  }
+  prevBtn.addEventListener('click', function(){ go(current - 1); });
+  nextBtn.addEventListener('click', function(){ go(current + 1); });
+  overviewBtn.addEventListener('click', function(){
+    var on = document.body.classList.toggle('overview');
+    overviewBtn.textContent = on ? 'Back to slides' : 'Overview';
+    if (!on) { render(); window.scrollTo({ top: 0 }); }
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) return;
+    if (document.body.classList.contains('overview')) return;
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(current + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(current - 1); }
+  });
+  var startHash = parseInt((location.hash || '').replace('#', ''), 10);
+  if (!isNaN(startHash) && startHash >= 1 && startHash <= slides.length) current = startHash - 1;
+  render();
+
+  /* ----- Forecast checker: sales call vs conversion-implied ----- */
+  var fcRows = Array.prototype.slice.call(document.querySelectorAll('#fcBody tr'));
+  function money(n){ return '$' + n.toFixed(1) + 'M'; }
+  function calcForecast(){
+    var rosy = [], cons = [];
+    fcRows.forEach(function(row){
+      var commit = parseFloat(row.getAttribute('data-commit')) || 0;
+      var pipe = parseFloat(row.getAttribute('data-pipe')) || 0;
+      var conv = parseFloat(row.getAttribute('data-conv')) || 0;
+      var input = row.querySelector('.fc-input');
+      var sales = parseFloat(input.value);
+      if (isNaN(sales)) sales = 0;
+      var implied = commit + pipe * conv;
+      row.querySelector('.fc-implied').textContent = money(implied);
+      var diff = implied > 0 ? (sales - implied) / implied * 100 : 0;
+      var flag = row.querySelector('.fc-flag');
+      var diffEl = row.querySelector('.fc-diff');
+      diffEl.textContent = (diff >= 0 ? '+' : '\u2212') + Math.abs(diff).toFixed(0) + '% vs implied';
+      if (diff > 10) { flag.className = 'pill fc-flag risk'; flag.textContent = 'Overly rosy'; rosy.push({ name: row.getAttribute('data-name'), gap: sales - implied }); }
+      else if (diff < -10) { flag.className = 'pill fc-flag watch'; flag.textContent = 'Overly conservative'; cons.push({ name: row.getAttribute('data-name'), gap: implied - sales }); }
+      else { flag.className = 'pill fc-flag ok'; flag.textContent = 'Aligned'; }
+    });
+    var why = document.getElementById('fcCtaWhy');
+    var doEl = document.getElementById('fcCtaDo');
+    if (!why || !doEl) return;
+    if (!rosy.length && !cons.length) {
+      why.textContent = 'Sales and the conversion math agree within 10% in every segment.';
+      doEl.textContent = 'bank the agreement and spend the review on execution instead of the number. Re-run this check next week: agreement in week 7 is worth more than agreement in week 3, because there has been more time for optimism to be tested.';
+      return;
+    }
+    var parts = [];
+    rosy.forEach(function(r){ parts.push(r.name + ' is calling ' + money(r.gap) + ' above what its own conversion history supports (rosy)'); });
+    cons.forEach(function(c){ parts.push(c.name + ' is calling ' + money(c.gap) + ' below its conversion-implied number (conservative)'); });
+    why.textContent = parts.join('; ') + '.';
+    doEl.textContent = 'confirm which assumption is wrong for each flagged segment before this forecast is used for planning. For a rosy call, sales names the specific deals and the buyer evidence behind the gap: if the evidence is stage labels rather than buyer actions, plan on the implied number and treat the gap as upside. For a conservative call, ask the mirror question: what is being held back, and is a real deal being protected from scrutiny? Either way, the conversion rate also goes on trial: if it is stale, fix the rate and re-run this check.';
+  }
+  fcRows.forEach(function(row){
+    row.querySelector('.fc-input').addEventListener('input', calcForecast);
+  });
+  calcForecast();
+
+  /* ----- FDE capacity calculator ----- */
+  function num(id){ var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; }
+  function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
+  function calcFde(){
+    var supply = num('inFdes') * num('inHours') * num('inWeeks');
+    var demand = num('inPerDeal') * num('inDeals');
+    var perDeal = num('inPerDeal');
+    var canDo = perDeal > 0 ? Math.floor(supply / perDeal) : 0;
+    var gap = supply - demand;
+    document.getElementById('outSupply').textContent = fmt(supply);
+    document.getElementById('outDemand').textContent = fmt(demand);
+    document.getElementById('outGap').innerHTML = (gap > 0 ? '+' : gap < 0 ? '&minus;' : '') + fmt(Math.abs(gap)) + ' hrs';
+    document.getElementById('outGapLabel').textContent = gap >= 0 ? 'Surplus' : 'Gap';
+    var box = document.getElementById('outGapBox');
+    box.classList.toggle('over', gap < 0);
+    box.classList.toggle('fits', gap >= 0);
+    document.getElementById('outDeals').textContent = Math.min(canDo, num('inDeals')) + ' of ' + num('inDeals');
+    var v = document.getElementById('fdeVerdict');
+    if (num('inDeals') === 0) {
+      v.innerHTML = 'No deals are asking for FDE time. Either the pipeline is all self-serve, or nobody has checked what the deals actually need.';
+    } else if (gap >= 0) {
+      v.innerHTML = 'At these numbers the plan <strong style="color:var(--ink)">fits</strong>, with ' + fmt(gap) + ' hours of slack. That slack is not waste: it is what absorbs a security review that runs long.';
+    } else {
+      var short = Math.ceil(Math.abs(gap) / perDeal);
+      v.innerHTML = 'At these numbers the team is <strong style="color:var(--ink)">' + short + ' deal' + (short === 1 ? '' : 's') + ' short</strong>: either a deal waits for next quarter, an FDE is borrowed, or scope per deal comes down. That is a decision for this room, not a surprise for week 12.';
+    }
+    var ctaWhy = document.getElementById('fdeCtaWhy');
+    var ctaDo = document.getElementById('fdeCtaDo');
+    if (ctaWhy && ctaDo) {
+      if (num('inDeals') === 0) {
+        ctaWhy.textContent = 'No deals are currently drawing on FDE hours.';
+        ctaDo.textContent = 'confirm with the segment leads that every incoming PoC and PoV request is being logged against this capacity. Unlogged demand is how teams hit the cap by surprise.';
+      } else if (gap >= 0) {
+        ctaWhy.textContent = 'Supply (' + fmt(supply) + ' hrs) covers demand (' + fmt(demand) + ' hrs), with ' + fmt(gap) + ' hrs of slack.';
+        ctaDo.textContent = 'hold the hiring trigger, but re-run this check whenever a new PoC or PoV request lands. Start onboarding the moment projected demand passes 90% of supply: onboarding takes about 6 weeks, so waiting until 100% means deciding 6 weeks too late.';
+      } else {
+        var shortfall = Math.ceil(Math.abs(gap) / perDeal);
+        ctaWhy.textContent = 'Demand (' + fmt(demand) + ' hrs) exceeds supply (' + fmt(supply) + ' hrs) by ' + fmt(Math.abs(gap)) + ' hrs, so PoC and PoV requests arriving now will queue behind committed deploys.';
+        ctaDo.textContent = 'start onboarding FDEs this week. Recruiting plus ramp to deployable takes about 6 weeks, so starting now is what lands capacity before the queue starts slipping deals. In parallel, sequence ' + shortfall + ' deal' + (shortfall === 1 ? '' : 's') + ' into next quarter and tell ' + (shortfall === 1 ? 'that customer' : 'those customers') + ' now, not in week 12.';
+      }
+    }
+  }
+  ['inFdes','inHours','inWeeks','inPerDeal','inDeals'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', calcFde);
+  });
+  calcFde();
+})();
+</script>
+<script>
+(function(){
+  /* ============ Shared state: one number set for the whole deck ============ */
+  var SEGMENTS = [
+    { id:'jkr', name:'JP/KR Self-Hosted (Open-Weight)', stream:'Stream 4', streamLabel:'Stream 4 · Self-hosted', tierCls:'sov', target:12.0, booked:3.1, commit:8.4, openPipe:7.5, totalPipe:16.0, conv:0.20, risk:'Gate', riskCls:'risk', riskText:'Data-residency approval still pending; models must run in-country and two deals cannot sign without it', atRisk:true },
+    { id:'anz', name:'ANZ API-First (Usage-Based)', stream:'Stream 1', streamLabel:'Stream 1 · Usage API', tierCls:'core', target:13.0, booked:6.9, commit:12.6, openPipe:2.0, totalPipe:18.9, conv:0.30, risk:'Healthy', riskCls:'ok', riskText:'Token usage compounding week on week; no single customer above 12% of commit', atRisk:false },
+    { id:'sea', name:'SEA Platform Commitments', stream:'Stream 2', streamLabel:'Stream 2 · Commitments', tierCls:'core', target:11.0, booked:5.2, commit:10.1, openPipe:4.4, totalPipe:16.8, conv:0.25, risk:'Watch', riskCls:'watch', riskText:'Signed commitments drawing down slower than plan, so recognised revenue lags the bookings', atRisk:true },
+    { id:'tel', name:'Telco & FSI Private Deployment', stream:'Stream 4', streamLabel:'Stream 4 · Self-hosted', tierCls:'reg', target:12.0, booked:4.6, commit:10.1, openPipe:6.0, totalPipe:16.3, conv:0.17, risk:'Watch', riskCls:'watch', riskText:'Security reviews for in-boundary deployment slipping one quarter to the right', atRisk:true }
+  ];
+  var TIER = { jkr:['S','Sovereign'], tel:['R','Regulated'], anz:['C','Core'], sea:['C','Core'] };
+  var SCEN = {
+    base:  { note:'Base case: the quarter as it stands in week 7.', mult:{}, drawdown:0.85, bridge:{ n:2.1, e:1.3, s:1.8 } },
+    gate:  { note:'Scenario: the JP/KR data-residency gate clears in week 8. Sovereign commit steps up, the gate risk closes, and the conversation moves from approvals to drawdown.', mult:{ jkr:{ commit:1.25 } }, drawdown:0.85, bridge:{ n:3.0, e:1.3, s:1.8 }, gateCleared:true },
+    telco: { note:'Scenario: Telco & FSI security reviews slip a full quarter. Commit drops in that segment and the slips line in the movement bridge does the talking.', mult:{ tel:{ commit:0.82 } }, drawdown:0.85, bridge:{ n:1.6, e:1.1, s:3.4 } },
+    surge: { note:'Scenario: API usage surges. ANZ and SEA workloads ramp faster than planned, pipeline and drawdown step up, and recognised revenue closes some of the gap to bookings.', mult:{ anz:{ pipe:1.35 }, sea:{ pipe:1.30 } }, drawdown:0.90, bridge:{ n:2.4, e:2.0, s:1.5 } }
+  };
+  var state = { scen:'base', pipeF:1, commitF:1, sortKey:null, sortDir:1, search:'', tier:'', tierABC:'', riskOnly:false, focus:null,
+                sales:{ jkr:11.6, anz:13.0, sea:9.9, tel:11.3 } };
+  var TARGET = 48.0, BOOKED = 19.8;
+
+  function scen(){ return SCEN[state.scen]; }
+  function derived(s){
+    var m = (scen().mult[s.id] || {});
+    var commit = s.commit * state.commitF * (m.commit || 1);
+    var openPipe = s.openPipe * state.pipeF * (m.pipe || 1);
+    var totalPipe = s.totalPipe * state.pipeF * (m.pipe || 1);
+    return { commit:commit, openPipe:openPipe, totalPipe:totalPipe,
+             coverage: totalPipe / (s.target - s.booked),
+             implied: commit + openPipe * s.conv };
+  }
+  function totals(){
+    var t = { target:0, commit:0, forecast:0, totalPipe:0 };
+    SEGMENTS.forEach(function(s){ var d = derived(s); t.target += s.target; t.commit += d.commit; t.forecast += d.implied; t.totalPipe += d.totalPipe; });
+    t.coverage = t.totalPipe / (t.target - BOOKED);
+    t.recognised = t.forecast * scen().drawdown;
+    return t;
+  }
+  function $(id){ return document.getElementById(id); }
+  function M(n){ return '$' + n.toFixed(1) + 'M'; }
+  function X(n){ return n.toFixed(1) + '\u00D7'; }
+  function segRisk(s){
+    if (s.id === 'jkr' && scen().gateCleared) return { label:'Gate cleared', cls:'ok', text:'Residency approval landed in this scenario; the two sovereign deals can sign. Watch moves to deployment capacity.', atRisk:false };
+    if (s.id === 'tel' && state.scen === 'telco') return { label:'Slipping', cls:'risk', text:'Security reviews slipped a full quarter in this scenario; commit has been cut and the deals move right.', atRisk:true };
+    return { label:s.risk, cls:s.riskCls, text:s.riskText, atRisk:s.atRisk };
+  }
+
+  /* ============ Renderers ============ */
+  function renderSummary(){
+    var t = totals();
+    var pct = Math.round(t.commit / TARGET * 100);
+    var riskLine = scen().gateCleared ? 'Biggest watch item: SEA drawdown pace.' :
+                   state.scen === 'telco' ? 'Biggest risk: Telco & FSI reviews slipping a full quarter.' :
+                   'Biggest risk: the JP/KR data-residency gate.';
+    $('execSummaryText').textContent = 'Commit ' + M(t.commit) + ' of ' + M(TARGET) + ' (' + pct + '%) \u00B7 bookings forecast ' + M(t.forecast) + ' \u00B7 recognised revenue ' + M(t.recognised) + ' \u00B7 coverage ' + X(t.coverage) + '. ' + riskLine;
+    $('kpiBooked').textContent = M(BOOKED);
+    $('kpiCommit').textContent = M(t.commit);
+    $('kpiCommitDetail').textContent = pct + '% of target. Commitments and licences the team will be held to signing';
+    $('kpiCoverage').textContent = X(t.coverage);
+    var rag = $('verdRag');
+    if (t.commit / TARGET >= 0.93) { rag.textContent = 'Green.'; }
+    else if (t.commit / TARGET >= 0.80) { rag.textContent = 'Amber.'; }
+    else { rag.textContent = 'Red.'; }
+    $('verdText').textContent = scen().gateCleared
+      ? 'With the residency gate cleared, the bookings quarter is landable: sovereign commit steps up and the binding question becomes whether consumption ramps fast enough for recognised revenue (' + M(t.recognised) + ') to matter this quarter, not next. Everything else in this review exists to test that sentence.'
+      : 'The bookings quarter is landable, but only if the JP/KR self-hosted segment clears its data-residency gate by week 9, and recognised revenue (' + M(t.recognised) + ') will trail bookings all quarter because consumption ramps behind every signature. Everything else in this review exists to test that sentence.';
+    var gap = TARGET - t.commit, gapPct = Math.round(gap / TARGET * 100);
+    $('ctaVerdictWhy').textContent = scen().gateCleared
+      ? 'the gate has cleared and commit is now ' + M(gap) + ' (' + gapPct + '%) under target with six weeks left: the remaining gap is a pipeline problem, not an approvals problem.'
+      : 'commit is ' + M(gap) + ' (' + gapPct + '%) under target with six weeks left, and the gap traces back to one gated segment.';
+    $('ctaVerdictDo').textContent = scen().gateCleared
+      ? 'move the two sovereign deals into commit today, then shift the escalation energy to drawdown: weekly SEA consumption reviews until recognised revenue tracks the bookings forecast. Re-plan around commit, not target, if coverage is not above 2.2\u00D7 by week 9.'
+      : 'escalate the JP/KR data-residency gate in this meeting and name its owner out loud. If the gate is not cleared by week 9, re-plan the quarter around the commit number, not the target.';
+  }
+  function renderSegTable(){
+    var rows = SEGMENTS.map(function(s){ return { s:s, d:derived(s), r:segRisk(s) }; });
+    rows = rows.filter(function(row){
+      if (state.riskOnly && !row.r.atRisk) return false;
+      if (state.tier && row.s.stream !== state.tier) return false;
+      if (state.tierABC && TIER[row.s.id][0] !== state.tierABC) return false;
+      if (state.search) {
+        var hay = (row.s.name + ' ' + row.s.streamLabel).toLowerCase();
+        if (hay.indexOf(state.search.toLowerCase()) === -1) return false;
+      }
+      return true;
+    });
+    if (state.sortKey) {
+      rows.sort(function(a, b){
+        var va = state.sortKey === 'target' ? a.s.target : state.sortKey === 'commit' ? a.d.commit : a.d.coverage;
+        var vb = state.sortKey === 'target' ? b.s.target : state.sortKey === 'commit' ? b.d.commit : b.d.coverage;
+        return (va - vb) * state.sortDir;
+      });
+    }
+    $('segBody').innerHTML = rows.map(function(row){
+      return '<tr data-seg="' + row.s.id + '"' + (state.focus === row.s.id ? ' class="is-focused"' : '') + '>' +
+        '<td><strong>' + row.s.name + '</strong> <span class="pill ' + row.s.tierCls + '">' + TIER[row.s.id][0] + ' \u00B7 ' + TIER[row.s.id][1] + '</span></td>' +
+        '<td><span class="pill ' + row.s.tierCls + '">' + row.s.stream + '</span></td>' +
+        '<td class="num">' + M(row.s.target) + '</td>' +
+        '<td class="num">' + M(row.d.commit) + '</td>' +
+        '<td class="num">' + X(row.d.coverage) + '</td>' +
+        '<td><span class="pill ' + row.r.cls + '">' + row.r.label + '</span> ' + row.r.text + '</td></tr>';
+    }).join('') || '<tr><td colspan="6" style="color:var(--muted)">No segments match. Clear the search or filters.</td></tr>';
+    Array.prototype.forEach.call($('segBody').querySelectorAll('tr[data-seg]'), function(tr){
+      tr.addEventListener('click', function(){
+        var id = tr.getAttribute('data-seg');
+        state.focus = state.focus === id ? null : id;
+        renderSegTable(); renderChecker();
+      });
+    });
+    var jkr = derived(SEGMENTS[0]), t = totals();
+    $('ctaSegWhy').textContent = scen().gateCleared
+      ? 'the residency gate has cleared in this scenario, sovereign commit steps up to ' + M(jkr.commit) + ', and coverage there is now ' + X(jkr.coverage) + ' against a ' + X(t.coverage) + ' blended average.'
+      : 'self-hosted coverage of ' + X(jkr.coverage) + ' sits well under the ' + X(t.coverage) + ' blended average, and two deals physically cannot sign until residency approval lands.';
+    $('ctaSegDo').textContent = scen().gateCleared
+      ? 'move the two sovereign deals into commit this week, and re-point pipeline generation at the Telco security-review queue, which is now the slowest gate in the deck.'
+      : 'open the escalation with the customer\u2019s named sponsor this week and report gate status at every WBR until it clears. Any deal still gated at week 9 comes out of commit.';
+    $('exCoverage').textContent = X(t.coverage);
+    $('exCoverageSeg').textContent = X(jkr.coverage);
+  }
+  function renderBars(){
+    var t = totals();
+    function setBar(fillId, valId, v){ $(fillId).style.width = Math.min(100, v / TARGET * 100) + '%'; $(valId).textContent = M(v); }
+    setBar('barCommitFill', 'barCommitVal', t.commit);
+    setBar('barForecastFill', 'barForecastVal', t.forecast);
+    setBar('barRecogFill', 'barRecogVal', t.recognised);
+    $('exCommit').textContent = M(t.commit) + ' of bookings';
+    $('exCommitPct').textContent = Math.round(t.commit / TARGET * 100) + '% of target';
+    $('exForecast').textContent = M(t.forecast);
+    $('exRecognised').textContent = M(t.recognised);
+    $('ctaPromWhy').textContent = 'the ' + M(t.forecast) + ' bookings forecast assumes upside that today\u2019s coverage does not support in the segment that needs it most, and recognised revenue (' + M(t.recognised) + ') depends on drawdown pace, not signatures.';
+  }
+  function renderBridge(){
+    var t = totals(), b = scen().bridge;
+    $('brNow').textContent = M(t.commit);
+    $('brLast').textContent = M(t.commit - (b.n + b.e - b.s));
+    $('brNew').textContent = M(b.n);
+    $('brExp').textContent = M(b.e);
+    $('brSlip').textContent = M(b.s);
+  }
+  function renderChecker(){
+    $('fcBody').innerHTML = SEGMENTS.map(function(s){
+      var d = derived(s);
+      return '<tr data-seg="' + s.id + '"' + (state.focus === s.id ? ' class="is-focused"' : '') + '>' +
+        '<td><strong>' + s.name + '</strong></td>' +
+        '<td class="num">' + M(d.commit) + '</td>' +
+        '<td class="num">' + M(d.openPipe) + '</td>' +
+        '<td class="num">' + Math.round(s.conv * 100) + '%</td>' +
+        '<td class="num fc-implied">' + M(d.implied) + '</td>' +
+        '<td><span class="fc-cur">$</span> <input class="fc-input" type="number" step="0.1" min="0" value="' + state.sales[s.id] + '" data-seg="' + s.id + '" aria-label="Sales forecast for ' + s.name + '"> <span class="fc-cur">M</span></td>' +
+        '<td><span class="pill fc-flag">Checking\u2026</span><div class="fc-diff"></div></td></tr>';
+    }).join('');
+    Array.prototype.forEach.call($('fcBody').querySelectorAll('.fc-input'), function(inp){
+      inp.addEventListener('input', function(){
+        var v = parseFloat(inp.value); state.sales[inp.getAttribute('data-seg')] = isNaN(v) ? 0 : v;
+        checkForecast();
+      });
+    });
+    checkForecast();
+  }
+  function checkForecast(){
+    var rosy = [], cons = [];
+    SEGMENTS.forEach(function(s, i){
+      var d = derived(s);
+      var row = $('fcBody').children[i];
+      if (!row) return;
+      var sales = state.sales[s.id] || 0;
+      var diff = d.implied > 0 ? (sales - d.implied) / d.implied * 100 : 0;
+      var flag = row.querySelector('.fc-flag'), diffEl = row.querySelector('.fc-diff');
+      diffEl.textContent = (diff >= 0 ? '+' : '\u2212') + Math.abs(diff).toFixed(0) + '% vs implied';
+      if (diff > 10) { flag.className = 'pill fc-flag risk'; flag.textContent = 'Overly rosy'; rosy.push({ name:s.name, gap:sales - d.implied }); }
+      else if (diff < -10) { flag.className = 'pill fc-flag watch'; flag.textContent = 'Overly conservative'; cons.push({ name:s.name, gap:d.implied - sales }); }
+      else { flag.className = 'pill fc-flag ok'; flag.textContent = 'Aligned'; }
+    });
+    var why = $('fcCtaWhy'), doEl = $('fcCtaDo');
+    if (!why || !doEl) return;
+    if (!rosy.length && !cons.length) {
+      why.textContent = 'Sales and the conversion math agree within 10% in every segment.';
+      doEl.textContent = 'bank the agreement and spend the review on execution instead of the number. Re-run this check next week: agreement in week 7 is worth more than agreement in week 3, because there has been more time for optimism to be tested.';
+      return;
+    }
+    var parts = [];
+    rosy.forEach(function(r){ parts.push(r.name + ' is calling ' + M(r.gap) + ' above what its own conversion history supports (rosy)'); });
+    cons.forEach(function(c){ parts.push(c.name + ' is calling ' + M(c.gap) + ' below its conversion-implied number (conservative)'); });
+    why.textContent = parts.join('; ') + '.';
+    doEl.textContent = 'confirm which assumption is wrong for each flagged segment before this forecast is used for planning. For a rosy call, sales names the specific deals and the buyer evidence behind the gap: if the evidence is stage labels rather than buyer actions, plan on the implied number and treat the gap as upside. For a conservative call, ask the mirror question: what is being held back, and is a real deal being protected from scrutiny? Either way, the conversion rate also goes on trial: if it is stale, fix the rate and re-run this check.';
+  }
+  function renderAll(){ renderSummary(); renderSegTable(); renderBars(); renderBridge(); renderChecker(); }
+
+  /* ============ Controls ============ */
+  Array.prototype.forEach.call(document.querySelectorAll('#scenRow .scen-btn'), function(btn){
+    btn.addEventListener('click', function(){
+      state.scen = btn.getAttribute('data-scen');
+      Array.prototype.forEach.call(document.querySelectorAll('#scenRow .scen-btn'), function(b){ b.classList.toggle('active', b === btn); });
+      $('scenNote').textContent = scen().note;
+      renderAll();
+    });
+  });
+  $('pipeF').addEventListener('input', function(){ state.pipeF = this.value / 100; $('pipeFVal').textContent = this.value + '%'; renderAll(); });
+  $('commitF').addEventListener('input', function(){ state.commitF = this.value / 100; $('commitFVal').textContent = this.value + '%'; renderAll(); });
+  $('segSearch').addEventListener('input', function(){ state.search = this.value; renderSegTable(); });
+  $('segTier').addEventListener('change', function(){ state.tier = this.value; renderSegTable(); });
+  $('riskToggle').addEventListener('click', function(){
+    state.riskOnly = !state.riskOnly;
+    this.classList.toggle('active', state.riskOnly);
+    this.setAttribute('aria-pressed', state.riskOnly ? 'true' : 'false');
+    renderSegTable();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-tierabc]'), function(btn){
+    btn.addEventListener('click', function(){
+      state.tierABC = btn.getAttribute('data-tierabc');
+      Array.prototype.forEach.call(document.querySelectorAll('[data-tierabc]'), function(b){ b.classList.toggle('active', b === btn); });
+      renderSegTable();
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('th.sortable'), function(th){
+    th.addEventListener('click', function(){
+      var k = th.getAttribute('data-sort');
+      if (state.sortKey === k) state.sortDir *= -1; else { state.sortKey = k; state.sortDir = -1; }
+      renderSegTable();
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.kpi.clickable'), function(tile){
+    tile.addEventListener('click', function(){
+      var idx = parseInt(tile.getAttribute('data-goto'), 10);
+      var chips = document.querySelectorAll('#chips .chip');
+      if (chips[idx]) chips[idx].click();
+    });
+  });
+  renderAll();
+})();
+</script>
+<script>
+(function(){
+  /* Device detection without user-agent sniffing: width breakpoints live in
+     CSS; here we only flag coarse-pointer (touch) devices for any JS needs. */
+  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+    document.documentElement.classList.add('is-touch');
+  }
+  /* Keep the active slide chip in view inside the phone header's single
+     scrollable navigation row, so the current slide is always visible. */
+  var chipsBox = document.getElementById('chips');
+  if (chipsBox && window.MutationObserver) {
+    var syncChip = function(){
+      var active = chipsBox.querySelector('.chip.active');
+      if (active && active.scrollIntoView) active.scrollIntoView({ block: 'nearest', inline: 'center' });
+    };
+    new MutationObserver(syncChip).observe(chipsBox, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  }
+  /* Progressive disclosure for DETAIL only (never for navigation or controls):
+     on phones each slide subtitle is clamped to two lines with a "More" tap
+     that expands it in place. The button is hidden above phone widths by CSS. */
+  Array.prototype.forEach.call(document.querySelectorAll('.slide'), function(slide){
+    var lede = slide.querySelector('.lede');
+    if (!lede) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'lede-toggle';
+    btn.textContent = 'More about this slide \u25BE';
+    btn.setAttribute('aria-expanded', 'false');
+    btn.addEventListener('click', function(){
+      var open = slide.classList.toggle('lede-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.textContent = open ? 'Show less \u25B4' : 'More about this slide \u25BE';
+    });
+    lede.parentNode.insertBefore(btn, lede.nextSibling);
+  });
+})();
+</script>
+</body>
+</html>
